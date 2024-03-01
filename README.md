@@ -1,5 +1,7 @@
 # Module graph
 
+Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, and is extensible via plugins.
+
 ## Installation
 
 ```
