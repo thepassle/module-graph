@@ -1,0 +1,30 @@
+{
+  "name": "@thepassle/module-graph",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --watch index.js",
+    "test": "node --test --experimental-test-coverage test/module-graph.test.js",
+    "lint:types": "tsc",
+    "lint:types:watch": "tsc --watch",
+    "test:watch": "node --test --watch test/module-graph.test.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "es-module-lexer": "^1.4.1",
+    "import-meta-resolve": "^4.0.0"
+  }
+}
