@@ -152,15 +152,17 @@ describe('plugins', () => {
       end: (moduleGraph) => {
         graphSize = moduleGraph.modules.size;
         called = true;
+        moduleGraph.foo = 'bar';
       }
     }
-    await createModuleGraph('./index.js', { 
+    const moduleGraph = await createModuleGraph('./index.js', { 
       basePath: fixture('plugins-end'),
       plugins: [plugin]
     });
 
     assert(called);
     assert.equal(graphSize, 2);
+    assert.equal(moduleGraph.foo, 'bar');
   });
 
   it('handleImport - boolean', async () => {

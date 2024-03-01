@@ -313,10 +313,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
    * [PLUGINS] - end
    */
   for (const plugin of plugins) {
-    const result = plugin.end?.(moduleGraph);
-    if (result) {
-      moduleGraph = result;
-    }
+    plugin.end?.(moduleGraph);
   }
 
   return moduleGraph;

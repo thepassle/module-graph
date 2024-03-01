@@ -54,5 +54,5 @@ export interface Plugin {
    * Runs once
    * Use for cleanup logic of the plugin
    */
-  end?: (moduleGraph: ModuleGraph) => ModuleGraph | void
+  end?: (moduleGraph: ModuleGraph) => void
 }

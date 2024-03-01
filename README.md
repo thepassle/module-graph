@@ -171,11 +171,14 @@ const plugin = {
   name: 'my-plugin',
   end: (moduleGraph) => {
     console.log('Plugin end')
+    moduleGraph.foo = 'bar';
   }
 }
 
 const moduleGraph = await createModuleGraph('./index.js', {
   plugins: [plugin]
 });
+
+moduleGraph.foo; // 'bar'
 ```
 
