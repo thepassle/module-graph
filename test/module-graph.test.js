@@ -120,38 +120,10 @@ describe('createModuleGraph', () => {
   });
 
   it('monorepo', async () => {
-    // @TODO
-    // const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('monorepo') });
-    // const m = moduleGraph.get('node_modules/foo/foo.js');
-
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('monorepo/packages/foo') });
+    const m = moduleGraph.get('../../node_modules/bar/index.js');
+    assert(m.packageRoot.endsWith('monorepo/node_modules/bar'));
   });
-
-  /**
-   * @TODO
-   * 
-   * - Example: bluwy's cjs/esm detector as a plugin, should be able to do that in handleImport hook
-   * 
-   * - monorepo style -> node_modules resolves to ../../node_modules/foo
-   * 
-   * - viz-js.com
-   *    let result = 'digraph {\n';
-   *    for (const [parent, importees] of moduleGraph.graph) {
-   *      result += `  "${parent}" -> ${[...importees].map(p => `"${p}"`).join(',')}\n`;
-   *    }
-   *    result += '}';
-   * 
-   * - nested node_modules
-   *  - implement { 'external-pkg': { '1.0.0': 'node_modules/external-pkg', '2.0.0': 'node_modules/foo/node_modules/external-pkg'} }
-   * 
-   * - test `moduleGraph.get` method
-   *  - string
-   *  - callback
-   * 
-   * 
-   * - test TS import? 
-   *  - what happens with `import type { Foo } from 'foo';?
-   *  - can we analyze ts source code with a plugin? :)
-   */
 });
 
 describe('plugins', () => {
