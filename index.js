@@ -2,7 +2,8 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL, fileURLToPath, resolve as urlResolve } from "url";
 import { builtinModules } from "module";
-import { init, parse } from "es-module-lexer";
+import { init as initEsl, parse } from "es-module-lexer";
+// import { init as initFmu, guessJsSyntax } from 'fmu'
 import { moduleResolve } from "import-meta-resolve";
 
 /**
@@ -175,7 +176,9 @@ export async function createModuleGraph(entrypoint, options = {}) {
   });
 
   /** Init es-module-lexer wasm */
-  await init;
+  await initEsl;
+  /** Init fmu wasm */
+  // await initFmu();
 
   while (importsToScan.size) {
     importsToScan.forEach((dep) => {

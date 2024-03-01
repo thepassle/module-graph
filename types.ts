@@ -7,6 +7,7 @@ export interface Module {
   source: string,
   packageRoot?: string,
   importedBy: string[],
+  kind: 'Mixed' | 'Unkown' | 'ESM' | 'CJS',
 }
 
 export interface Plugin {

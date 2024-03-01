@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "es-module-lexer": "^1.4.1",
+    "fmu": "^0.0.1",
     "import-meta-resolve": "^4.0.0"
   }
 }
