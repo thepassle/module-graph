@@ -43,6 +43,13 @@ describe('createModuleGraph', () => {
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
   });
 
+  it('import-attributes', async () => {
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('import-attributes') });
+
+    assert(moduleGraph.graph.get('index.js').has('data.json'));
+    assert(moduleGraph.graph.get('index.js').has('styles.css'));
+  });
+
   it('multiple-import-chains', async () => {
     /**
      *     a
@@ -125,6 +132,13 @@ describe('createModuleGraph', () => {
    * - Example: bluwy's cjs/esm detector as a plugin, should be able to do that in handleImport hook
    * 
    * - monorepo style -> node_modules resolves to ../../node_modules/foo
+   * 
+   * - viz-js.com
+   *    let result = 'digraph {\n';
+   *    for (const [parent, importees] of moduleGraph.graph) {
+   *      result += `  "${parent}" -> ${[...importees].map(p => `"${p}"`).join(',')}\n`;
+   *    }
+   *    result += '}';
    * 
    * - nested node_modules
    *  - implement { 'external-pkg': { '1.0.0': 'node_modules/external-pkg', '2.0.0': 'node_modules/foo/node_modules/external-pkg'} }
