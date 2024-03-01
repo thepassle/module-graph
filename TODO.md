@@ -39,6 +39,11 @@ console.log(await guessJsSyntax(code)) // "CJS"
 
 Probably only a type change and adding `await` to the plugin callbacks
 
+## Plugin error handling
+
+- Throw if no plugin name provided
+- Add error handling to plugin calls
+
 ## TS?
 
 Can we support analyzing TS sourcecode? Maybe via a plugin?
