@@ -1,27 +1,28 @@
 # Module graph
 
-Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, and is extensible via plugins.
+Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, and is extensible via plugins. Builds on top of [`es-module-lexer`](https://www.npmjs.com/package/es-module-lexer) for scanning a module's imports, and [`@rollup/plugin-node-resolve`](https://www.npmjs.com/package/@rollup/plugin-node-resolve) for module resolution (without using `Rollup` directly).
 
 ## Installation
 
 ```
-npm i module-graph
+npm i @thepassle/module-graph
 ```
 
 ## Usage
 
 ```js
-import { createModuleGraph } from 'module-graph';
+import { createModuleGraph } from '@thepassle/module-graph';
 
 const moduleGraph = await createModuleGraph('./index.js');
 
 /**
- * Options:
+ * Configuration options
+ * Supports all `@rollup/plugin-node-resolve`'s `RollupNodeResolveOptions` options.
+ * https://www.npmjs.com/package/@rollup/plugin-node-resolve#options
  */
 const moduleGraph = await createModuleGraph('./index.js', {
   basePath: process.cwd(),
-  conditions: ['browser', 'import'],
-  preserveSymlinks: true,
+  exportConditions: ['browser', 'import'],
   plugins: [myPlugin]
 });
 ```
@@ -82,7 +83,7 @@ Use for initializing logic of the plugin
 ```js
 const plugin = {
   name: 'my-plugin',
-  start: ({entrypoint, basePath, conditions, preserveSymlinks}) => {
+  start: ({entrypoint, basePath, exportConditions}) => {
     console.log('Plugin start');
   }
 }
@@ -153,8 +154,8 @@ Can be used to implement custom resolution logic
 ```js
 const plugin = {
   name: 'my-plugin',
-  resolve: ({ importee, importer, conditions, preserveSymlinks }) => {
-    return customResolve(importee, importer, conditions, preserveSymlinks);
+  resolve: ({ importee, importer, exportConditions }) => {
+    return customResolve(importee, importer, exportConditions);
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "",
   "scripts": {
     "start": "node --watch index.js",
@@ -26,10 +26,11 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "import-meta-resolve": "^4.0.0"
   },
   "dependencies": {
-    "es-module-lexer": "^1.4.1",
-    "import-meta-resolve": "^4.0.0"
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "es-module-lexer": "^1.4.1"
   }
 }

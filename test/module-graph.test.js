@@ -42,6 +42,13 @@ describe('createModuleGraph', () => {
 
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
   });
+
+  // it('typescript', async () => {
+  //   @TODO create and ship plugin
+  //   const moduleGraph = await createModuleGraph('./index.ts', { basePath: fixture('typescript') });
+
+  //   assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
+  // });
   
   it('require-in-chain', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('require-in-chain') });
@@ -136,11 +143,10 @@ describe('plugins', () => {
   it('start', async () => {
     const plugin = {
       name: 'start-plugin',
-      start: ({ entrypoint, basePath, conditions, preserveSymlinks }) => {
+      start: ({ entrypoint, basePath, exportConditions }) => {
         assert.equal(entrypoint, './index.js');
         assert.equal(basePath, fixture('plugins-start'));
-        assert.deepStrictEqual(conditions, new Set(['import', 'node']));
-        assert.equal(preserveSymlinks, false);
+        assert.deepStrictEqual(exportConditions, []);
       }
     }
     await createModuleGraph('./index.js', { 
@@ -224,11 +230,11 @@ describe('plugins', () => {
 
     const resolvePlugin = {
       name: 'skip-plugin',
-      resolve: ({ importee, importer, conditions, preserveSymlinks }) => {
+      resolve: ({ importee, importer, exportConditions }) => {
         /**
          * Rewrite `./bar.js` (importee) to `./baz.js`
          */
-        return moduleResolve('./baz.js', importer, conditions, preserveSymlinks);
+        return moduleResolve('./baz.js', importer, exportConditions);
       }
     }
     
