@@ -1,4 +1,5 @@
 import { ModuleGraph } from './index.js';
+import type { ImportSpecifier, ExportSpecifier } from 'es-module-lexer';
 
 export interface Module {
   href: string,
@@ -6,6 +7,10 @@ export interface Module {
   path: string,
   source: string,
   packageRoot?: string,
+  imports: readonly ImportSpecifier[],
+  exports: readonly ExportSpecifier[],
+  facade: boolean,
+  hasModuleSyntax: boolean,
   importedBy: string[],
 }
 

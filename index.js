@@ -150,18 +150,15 @@ export async function createModuleGraph(entrypoint, options = {}) {
     )
   );
 
-
   /**
    * [PLUGINS] - start
    */
-  for (const plugin of plugins) {
-    await Promise.all(plugins.map((plugin) => plugin.start?.({
-      entrypoint,
-      basePath,
-      conditions,
-      preserveSymlinks,
-    })));
-  }
+  await Promise.all(plugins.map((plugin) => plugin.start?.({
+    entrypoint,
+    basePath,
+    conditions,
+    preserveSymlinks,
+  })));
 
   const importsToScan = new Set([module]);
 
@@ -171,8 +168,13 @@ export async function createModuleGraph(entrypoint, options = {}) {
     pathname: pathToFileURL(module).pathname,
     path: module,
     source: '',
+    imports: [],
+    exports: [],
+    facade: false,
+    hasModuleSyntax: true,
     importedBy: []
   });
+  
 
   /** Init es-module-lexer wasm */
   await init;
@@ -182,8 +184,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
       importsToScan.delete(dep);
       const source = fs.readFileSync(path.join(basePath, dep)).toString();
 
-      const [imports] = parse(source);
-
+      const [imports, exports, facade, hasModuleSyntax] = parse(source);
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
 
@@ -271,6 +272,10 @@ export async function createModuleGraph(entrypoint, options = {}) {
             pathname: resolvedURL.pathname,
             path: pathToDependency,
             importedBy: [],
+            imports: [],
+            exports: [],
+            facade: false,
+            hasModuleSyntax: true,
             source: '',
             ...(packageRoot ? {packageRoot} : {}),
           }
@@ -300,6 +305,10 @@ export async function createModuleGraph(entrypoint, options = {}) {
        */
       const currentModule = /** @type {Module} */ (moduleGraph.modules.get(dep));
       currentModule.source = source;
+      currentModule.exports = exports;
+      currentModule.imports = imports;
+      currentModule.facade = facade;
+      currentModule.hasModuleSyntax = hasModuleSyntax;
 
       /**
        * [PLUGINS] - analyze

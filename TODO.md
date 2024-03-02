@@ -1,9 +1,5 @@
 # TODO
 
-## Add `imports` to Module
-
-Can just use es-module-lexers result
-
 ## Multiple entrypoints
 
 Example:

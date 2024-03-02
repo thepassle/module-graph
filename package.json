@@ -1,13 +1,14 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "scripts": {
     "start": "node --watch index.js",
     "test": "node --test --experimental-test-coverage test/module-graph.test.js",
     "test:watch": "node --test --watch test/module-graph.test.js",
     "lint:types": "tsc",
-    "lint:types:watch": "tsc --watch"
+    "lint:types:watch": "tsc --watch",
+    "prepublishOnly": "tsc && npm test"
   },
   "exports": {
     ".": {
