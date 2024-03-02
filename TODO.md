@@ -45,21 +45,3 @@ console.log(await guessJsSyntax(code)) // "CJS"
 Can we support analyzing TS sourcecode? Maybe via a plugin?
 Might have to do some nasty file extension magic.
 Some tsconfig moduleResolution require `.js` file extensions to reference `.ts` files on the fs
-
-## Visualize graph
-
-Maybe use viz-js.com? Can implement in a plugin:
-
-```js
-import { instance } from "@viz-js/viz";
-
-let result = 'digraph {\n';
-for (const [parent, importees] of moduleGraph.graph) {
-  result += `  "${parent}" -> ${[...importees].map(p => `"${p}"`).join(',')}\n`;
-}
-result += '}';
-
-instance().then(viz => {
-  const svg = viz.renderSVGElement(result);
-});
-```
