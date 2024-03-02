@@ -16,7 +16,9 @@ import { createModuleGraph } from '@thepassle/module-graph';
 const moduleGraph = await createModuleGraph('./index.js');
 
 /**
- * Options:
+ * Configuration options
+ * Supports all `@rollup/plugin-node-resolve`'s `RollupNodeResolveOptions` options.
+ * https://www.npmjs.com/package/@rollup/plugin-node-resolve#options
  */
 const moduleGraph = await createModuleGraph('./index.js', {
   basePath: process.cwd(),
