@@ -145,7 +145,11 @@ export async function createModuleGraph(entrypoint, options = {}) {
     ...resolveOptions 
   } = options;
 
-  const r = nodeResolve({...resolveOptions, exportConditions});
+  const r = nodeResolve({
+    ...resolveOptions, 
+    exportConditions,
+    rootDir: basePath,
+  });
   // @ts-expect-error
   const resolveFn = r.resolveId.handler.bind({resolve: () => null});
 
@@ -241,6 +245,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
               importee,
               importer,
               exportConditions,
+              ...resolveOptions,
             });
             // @TODO if a plugin returns a URL, we still continue other resolve hooks of later plugins
             // should we do that? or should we bail?

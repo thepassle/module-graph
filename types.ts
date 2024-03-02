@@ -1,5 +1,6 @@
 import { ModuleGraph } from './index.js';
 import type { ImportSpecifier, ExportSpecifier } from 'es-module-lexer';
+import type { RollupNodeResolveOptions } from '@rollup/plugin-node-resolve';
 
 export interface Module {
   href: string,
@@ -53,7 +54,7 @@ export interface Plugin {
     importee: string,
     importer: URL,
     exportConditions: string[],
-  }) => URL | void | Promise<void | URL>,
+  } & RollupNodeResolveOptions) => URL | void | Promise<void | URL>,
   /**
    * Runs once
    * Use for cleanup logic of the plugin
