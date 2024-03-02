@@ -1,6 +1,6 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "",
   "scripts": {
     "start": "node --watch index.js",

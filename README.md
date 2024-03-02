@@ -1,17 +1,17 @@
 # Module graph
 
-Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, and is extensible via plugins.
+Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, and is extensible via plugins. Builds on top of [`es-module-lexer`](https://www.npmjs.com/package/es-module-lexer) for scanning a module's imports, and [`@rollup/plugin-node-resolve`](https://www.npmjs.com/package/@rollup/plugin-node-resolve) for module resolution (without using `Rollup` directly).
 
 ## Installation
 
 ```
-npm i module-graph
+npm i @thepassle/module-graph
 ```
 
 ## Usage
 
 ```js
-import { createModuleGraph } from 'module-graph';
+import { createModuleGraph } from '@thepassle/module-graph';
 
 const moduleGraph = await createModuleGraph('./index.js');
 
