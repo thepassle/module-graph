@@ -71,6 +71,8 @@ You can also extend the default behavior by providing `plugin`s.
 
 ### Hooks
 
+All plugin hooks can be async.
+
 #### `start`
 
 > Runs once
@@ -96,8 +98,8 @@ const moduleGraph = await createModuleGraph('./index.js', {
 
 Can be used to implement custom logic or rewrite a specifier
 
-If `false` is returned, the import will be skipped entirely
-If a string is returned, it will try to resolve that instead
+- If `false` is returned, the import will be skipped entirely
+- If a string is returned, it will try to resolve that instead
 
 ```js
 const plugin = {
@@ -118,8 +120,7 @@ const moduleGraph = await createModuleGraph('./index.js', {
 
 > Runs for every module
 
-Can be used to analyze the module (or its source), and add 
-additional meta information to the Module object
+Can be used to analyze the module (or its source), and add additional meta information to the Module object
 
 You can mutate the module directly, no need to return it
 
@@ -146,8 +147,8 @@ moduleGraph.get('module-containing-process-env.js').usesProcessEnv; // true
 
 Can be used to implement custom resolution logic
 
-If nothing is returned, the default resolution will be used
-If a URL is returned, it will output that instead
+- If nothing is returned, the default resolution will be used
+- If a URL is returned, it will output that instead
 
 ```js
 const plugin = {

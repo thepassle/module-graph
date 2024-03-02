@@ -42,6 +42,12 @@ describe('createModuleGraph', () => {
 
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
   });
+  
+  it('require-in-chain', async () => {
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('require-in-chain') });
+    // Does not include `bar.js` because it was `require`d
+    assert.equal(moduleGraph.modules.size, 2);
+  });
 
   it('import-attributes', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('import-attributes') });

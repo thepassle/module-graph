@@ -155,12 +155,12 @@ export async function createModuleGraph(entrypoint, options = {}) {
    * [PLUGINS] - start
    */
   for (const plugin of plugins) {
-    plugin.start?.({
+    await Promise.all(plugins.map((plugin) => plugin.start?.({
       entrypoint,
       basePath,
       conditions,
       preserveSymlinks,
-    });
+    })));
   }
 
   const importsToScan = new Set([module]);
@@ -178,32 +178,33 @@ export async function createModuleGraph(entrypoint, options = {}) {
   await init;
 
   while (importsToScan.size) {
-    importsToScan.forEach((dep) => {
+    for (const dep of importsToScan) {
       importsToScan.delete(dep);
       const source = fs.readFileSync(path.join(basePath, dep)).toString();
 
       const [imports] = parse(source);
 
-      imports?.forEach(({n: importee}) => {
-        if (!importee) return;
+      importLoop: for (let { n: importee } of imports) {
+        if (!importee) continue;
 
         /**
          * [PLUGINS] - handleImport
          */
         for (const plugin of plugins) {
-          const result = /** @type {void | boolean | string} */ (plugin.handleImport?.({
+          const result = await /** @type {void | boolean | string} */ (plugin.handleImport?.({
             source,
             importer: dep,
             importee,
           }));
+
           if (typeof result === 'string') {
             importee = result;
           } else if (result === false) {
-            return;
+            continue importLoop;
           }
         }
         /** Skip built-in modules like fs, path, etc */
-        if (builtinModules.includes(importee.replace("node:", ""))) return;
+        if (builtinModules.includes(importee.replace("node:", ""))) continue;
         if (isBareModuleSpecifier(importee)) {
           moduleGraph.externalDependencies.add(importee);
         }
@@ -219,7 +220,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
            */
           let resolvedURL;
           for (const plugin of plugins) {
-            const result = plugin.resolve?.({
+            const result = await plugin.resolve?.({
               importee,
               importer,
               conditions,
@@ -291,7 +292,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
         } catch (e) {
           console.log(`Failed to resolve dependency "${importee}".`, e);
         }
-      });
+      };
 
       /**
        * Add `source` code to the Module, and apply the `analyze` function
@@ -304,17 +305,15 @@ export async function createModuleGraph(entrypoint, options = {}) {
        * [PLUGINS] - analyze
        */
       for (const plugin of plugins) {
-        plugin.analyze?.(currentModule);
+        await plugin.analyze?.(currentModule);
       }
-    });
+    };
   }
 
   /**
    * [PLUGINS] - end
    */
-  for (const plugin of plugins) {
-    plugin.end?.(moduleGraph);
-  }
+  await Promise.all(plugins.map((plugin) => plugin.end?.(moduleGraph)));
 
   return moduleGraph;
 }
