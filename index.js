@@ -145,6 +145,18 @@ export async function createModuleGraph(entrypoint, options = {}) {
     ...resolveOptions 
   } = options;
 
+  // const packageCache = {
+  //   "node_modules/foo": "1.0.0",
+  //   "node_modules/bar/node_modules/foo": "2.0.0",
+  // };
+  // construct:
+  // const externalDependencies = {
+  //   "foo": {
+  //     "1.0.0": "node_modules/foo",
+  //     "2.0.0": "node_modules/bar/node_modules/foo",
+  //   }
+  // }
+
   const r = nodeResolve({
     ...resolveOptions, 
     exportConditions,
@@ -247,14 +259,10 @@ export async function createModuleGraph(entrypoint, options = {}) {
               exportConditions,
               ...resolveOptions,
             });
-            // @TODO if a plugin returns a URL, we still continue other resolve hooks of later plugins
-            // should we do that? or should we bail?
-            //
-            // @TODO try if I can use the typescript plugin to resolve TS code as well?
-            // should be able to do the same trick as here: https://gist.github.com/thepassle/6333707c003ef8c91cc0b35cec08a2ad
-            // but the rollup ts plugin probably doesnt even need binding `this`
+
             if (result) {
               resolvedURL = result;
+              break;
             }
           }
 
@@ -265,7 +273,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
             resolvedURL = /** @type {URL} */ (await resolve(importee, importer.pathname));
           }
           const pathToDependency = path.posix.relative(basePath, fileURLToPath(resolvedURL));
-             
+
           /** 
            * Get the packageRoot of the external dependency, which is useful for getting
            * to the package.json, for example. You can't always `require.resolve` it, 

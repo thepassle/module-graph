@@ -250,6 +250,31 @@ describe('plugins', () => {
     assert.deepStrictEqual(moduleGraph.getUniqueModules(), ['index.js', 'baz.js']);
   });
 
+  it('resolve multiple', async () => {
+    const resolvePlugin1 = {
+      name: 'skip-plugin',
+      resolve: ({ importee, importer, exportConditions }) => {
+        return moduleResolve('./baz.js', importer, exportConditions);
+      }
+    }
+
+    let called = false;
+    const resolvePlugin2 = {
+      name: 'skip-plugin',
+      resolve: ({ importee, importer, exportConditions }) => {
+        called = true;
+      }
+    }
+    
+    const moduleGraph = await createModuleGraph('./index.js', { 
+      basePath: fixture('plugins-resolve'),
+      plugins: [resolvePlugin1, resolvePlugin2]
+    });
+
+    /** `resolvePlugin1` has already resolved the module, so `resolvePlugin2`'s `resolve` hook gets skipped */
+    assert.equal(called, false);
+  });
+
   it('analyze', async () => {
     const analyzePlugin = {
       name: 'analyze-plugin',

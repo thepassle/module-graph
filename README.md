@@ -157,7 +157,7 @@ moduleGraph.get('module-containing-process-env.js').usesProcessEnv; // true
 
 > Runs for every import starting (but excluding) the entrypoint
 
-Can be used to implement custom resolution logic. Gets passed the `resolveOptions` passed to `createModuleGraph`.
+Can be used to implement custom resolution logic. Gets passed the `resolveOptions` passed to `createModuleGraph`. If a plugin resolves the module and returns it from the `resolve` hook, consequent plugins will no longer be executed, because the module is already resolved.
 
 - If nothing is returned, the default resolution will be used
 - If a URL is returned, it will output that instead

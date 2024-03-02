@@ -39,9 +39,3 @@ console.log(await guessJsSyntax(code)) // "CJS"
 
 - Throw if no plugin name provided
 - Add error handling to plugin calls
-
-## TS?
-
-Can we support analyzing TS sourcecode? Maybe via a plugin?
-Might have to do some nasty file extension magic.
-Some tsconfig moduleResolution require `.js` file extensions to reference `.ts` files on the fs
