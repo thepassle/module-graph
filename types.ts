@@ -23,8 +23,7 @@ export interface Plugin {
   start?: (params: {
     entrypoint: string,
     basePath: string,
-    conditions: Set<string>,
-    preserveSymlinks: boolean,
+    exportConditions: string[],
   }) => void | Promise<void>
   /**
    * Runs for every import starting (but excluding) the entrypoint
@@ -53,8 +52,7 @@ export interface Plugin {
   resolve?: (params: {
     importee: string,
     importer: URL,
-    conditions: Set<string>,
-    preserveSymlinks: boolean,
+    exportConditions: string[],
   }) => URL | void | Promise<void | URL>,
   /**
    * Runs once

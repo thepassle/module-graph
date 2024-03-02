@@ -20,8 +20,7 @@ const moduleGraph = await createModuleGraph('./index.js');
  */
 const moduleGraph = await createModuleGraph('./index.js', {
   basePath: process.cwd(),
-  conditions: ['browser', 'import'],
-  preserveSymlinks: true,
+  exportConditions: ['browser', 'import'],
   plugins: [myPlugin]
 });
 ```
@@ -82,7 +81,7 @@ Use for initializing logic of the plugin
 ```js
 const plugin = {
   name: 'my-plugin',
-  start: ({entrypoint, basePath, conditions, preserveSymlinks}) => {
+  start: ({entrypoint, basePath, exportConditions}) => {
     console.log('Plugin start');
   }
 }
@@ -153,8 +152,8 @@ Can be used to implement custom resolution logic
 ```js
 const plugin = {
   name: 'my-plugin',
-  resolve: ({ importee, importer, conditions, preserveSymlinks }) => {
-    return customResolve(importee, importer, conditions, preserveSymlinks);
+  resolve: ({ importee, importer, exportConditions }) => {
+    return customResolve(importee, importer, exportConditions);
   }
 }
 

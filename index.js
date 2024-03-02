@@ -3,11 +3,13 @@ import path from "path";
 import { pathToFileURL, fileURLToPath, resolve as urlResolve } from "url";
 import { builtinModules } from "module";
 import { init, parse } from "es-module-lexer";
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { moduleResolve } from "import-meta-resolve";
 
 /**
  * @typedef {import('./types.js').Module} Module
  * @typedef {import('./types.js').Plugin} Plugin
+ * @typedef {import('@rollup/plugin-node-resolve').RollupNodeResolveOptions} RollupNodeResolveOptions
  */
 
 /**
@@ -129,20 +131,35 @@ export class ModuleGraph {
 /**
  *
  * @param {string} entrypoint
- * @param {{
- *  conditions?: string[],
- *  preserveSymlinks?: boolean,
+ * @param {RollupNodeResolveOptions & {
+ *  plugins?: Plugin[],
  *  basePath?: string,
- *  plugins?: Plugin[]
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
 export async function createModuleGraph(entrypoint, options = {}) {
-  const plugins = options?.plugins ?? [];
-  const basePath = options?.basePath ?? process.cwd();
-  const conditions = new Set(options?.conditions ?? ["node", "import"]);
-  const preserveSymlinks = options?.preserveSymlinks ?? false;
-  
+  const { 
+    plugins = [], 
+    basePath = process.cwd(), 
+    exportConditions = [],
+    ...resolveOptions 
+  } = options;
+
+  const r = nodeResolve({...resolveOptions, exportConditions});
+  // @ts-expect-error
+  const resolveFn = r.resolveId.handler.bind({resolve: () => null});
+
+  /**
+   * @param {string} importee 
+   * @param {string} importer 
+   * @param {Object} options 
+   * @returns {Promise<URL | undefined>}
+   */
+  async function resolve(importee, importer, options = {}) {
+    const resolved = await resolveFn(importee, importer, options);
+    return pathToFileURL(resolved.id);
+  }
+
   const module = path.posix.relative(
     basePath,
     fileURLToPath(
@@ -156,8 +173,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
   await Promise.all(plugins.map((plugin) => plugin.start?.({
     entrypoint,
     basePath,
-    conditions,
-    preserveSymlinks,
+    exportConditions,
   })));
 
   const importsToScan = new Set([module]);
@@ -224,9 +240,14 @@ export async function createModuleGraph(entrypoint, options = {}) {
             const result = await plugin.resolve?.({
               importee,
               importer,
-              conditions,
-              preserveSymlinks,
+              exportConditions,
             });
+            // @TODO if a plugin returns a URL, we still continue other resolve hooks of later plugins
+            // should we do that? or should we bail?
+            //
+            // @TODO try if I can use the typescript plugin to resolve TS code as well?
+            // should be able to do the same trick as here: https://gist.github.com/thepassle/6333707c003ef8c91cc0b35cec08a2ad
+            // but the rollup ts plugin probably doesnt even need binding `this`
             if (result) {
               resolvedURL = result;
             }
@@ -236,7 +257,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
            * If no plugins resolved the URL, defer to default resolution
            */
           if (!resolvedURL) {
-            resolvedURL = moduleResolve(importee, importer, conditions, preserveSymlinks);
+            resolvedURL = /** @type {URL} */ (await resolve(importee, importer.pathname));
           }
           const pathToDependency = path.posix.relative(basePath, fileURLToPath(resolvedURL));
              
