@@ -35,10 +35,6 @@ const code = `exports.foo = 'bar'`
 console.log(await guessJsSyntax(code)) // "CJS"
 ```
 
-## Plugins should support promises
-
-Probably only a type change and adding `await` to the plugin callbacks
-
 ## Plugin error handling
 
 - Throw if no plugin name provided
