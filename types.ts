@@ -15,6 +15,7 @@ export interface Module {
 }
 
 export interface Plugin {
+  name: string,
   /**
    * Runs once
    * Use for initializing logic of the plugin
