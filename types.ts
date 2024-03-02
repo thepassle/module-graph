@@ -16,7 +16,7 @@ export interface Module {
 }
 
 export interface Plugin {
-  name: string,
+  name: string;
   /**
    * Runs once
    * Use for initializing logic of the plugin
@@ -25,7 +25,7 @@ export interface Plugin {
     entrypoint: string,
     basePath: string,
     exportConditions: string[],
-  }) => void | Promise<void>
+  }) => void | Promise<void>;
   /**
    * Runs for every import starting (but excluding) the entrypoint
    * Can be used to implement custom logic or rewrite a specifier
@@ -36,14 +36,14 @@ export interface Plugin {
     source: string,
     importer: string,
     importee: string,
-  }) => void | boolean | string | Promise<void | boolean | string>,
+  }) => void | boolean | string | Promise<void | boolean | string>;
   /**
    * Runs for every module
    * Can be used to analyze the module (or its source), and add 
    * additional meta information to the Module object
    * You can mutate the module directly, no need to return it
    */
-  analyze?: (module: Module) => void | Promise<void>,
+  analyze?: (module: Module) => void | Promise<void>;
   /**
    * Runs for every import starting (but excluding) the entrypoint
    * Can be used to implement custom resolution logic
@@ -54,10 +54,10 @@ export interface Plugin {
     importee: string,
     importer: URL,
     exportConditions: string[],
-  } & RollupNodeResolveOptions) => URL | void | Promise<void | URL>,
+  } & RollupNodeResolveOptions) => URL | void | Promise<void | URL>;
   /**
    * Runs once
    * Use for cleanup logic of the plugin
    */
-  end?: (moduleGraph: ModuleGraph) => void | Promise<void>
+  end?: (moduleGraph: ModuleGraph) => void | Promise<void>;
 }

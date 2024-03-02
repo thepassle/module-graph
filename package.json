@@ -14,23 +14,29 @@
     ".": {
       "types": "./dist-types/index.d.ts",
       "default": "./index.js"
+    },
+    "./plugins/typescript.js": {
+      "types": "./dist-types/plugins/typescript.d.ts",
+      "default": "./plugins/typescript.js"
     }
   },
   "files": [
     "README.md",
     "dist-types",
-    "index.js"
+    "index.js",
+    "plugins/*.js"
   ],
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "import-meta-resolve": "^4.0.0"
+    "import-meta-resolve": "^4.0.0",
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
     "es-module-lexer": "^1.4.1"
   }
 }

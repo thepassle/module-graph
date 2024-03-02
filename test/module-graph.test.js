@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import { moduleResolve } from 'import-meta-resolve';
 import { createModuleGraph } from '../index.js';
+import { typescript } from '../plugins/typescript.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
 
@@ -43,12 +44,15 @@ describe('createModuleGraph', () => {
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
   });
 
-  // it('typescript', async () => {
-  //   @TODO create and ship plugin
-  //   const moduleGraph = await createModuleGraph('./index.ts', { basePath: fixture('typescript') });
+  it('typescript', async () => {
+    const moduleGraph = await createModuleGraph('./index.ts', { 
+      basePath: fixture('typescript'),
+      plugins: [typescript()]
+    });
 
-  //   assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
-  // });
+    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
+    assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
+  });
   
   it('require-in-chain', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('require-in-chain') });
