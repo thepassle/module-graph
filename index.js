@@ -4,7 +4,6 @@ import { pathToFileURL, fileURLToPath, resolve as urlResolve } from "url";
 import { builtinModules } from "module";
 import { init, parse } from "es-module-lexer";
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import { moduleResolve } from "import-meta-resolve";
 import { ModuleGraph } from "./ModuleGraph.js";
 import { isBareModuleSpecifier, isScopedPackage } from "./utils.js";
 
@@ -63,14 +62,11 @@ export async function createModuleGraph(entrypoints, options = {}) {
     return pathToFileURL(resolved.id);
   }
 
-  const modules = (typeof entrypoints === "string" ? [entrypoints] : entrypoints).map(e => {
-    return path.posix.relative(
-      basePath,
-      fileURLToPath(
-        moduleResolve(e, pathToFileURL(path.join(basePath, e)))
-      )
-    );
-  });
+  const processedEntrypoints = (typeof entrypoints === "string" ? [entrypoints] : entrypoints);
+  const modules = await Promise.all(processedEntrypoints.map(async e => {
+    const resolved = /** @type {URL} */ (await resolve(e, pathToFileURL(path.join(basePath, e)).pathname));
+    return path.posix.relative(basePath, fileURLToPath(resolved));
+  }));
 
   /**
    * [PLUGINS] - start
