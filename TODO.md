@@ -23,6 +23,8 @@ Maybe something like:
 
 ## Detect and ignore cjs?
 
+Or maybe I can just use esm-shims `hasModuleSyntax` for this?
+
 Can use [fmu](https://github.com/bluwy/fmu) to detect cjs and bail
 
 ```js
@@ -34,8 +36,3 @@ await init()
 const code = `exports.foo = 'bar'`
 console.log(await guessJsSyntax(code)) // "CJS"
 ```
-
-## Plugin error handling
-
-- Throw if no plugin name provided
-- Add error handling to plugin calls

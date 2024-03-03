@@ -186,11 +186,23 @@ export async function createModuleGraph(entrypoint, options = {}) {
   /**
    * [PLUGINS] - start
    */
-  await Promise.all(plugins.map((plugin) => plugin.start?.({
-    entrypoint,
-    basePath,
-    exportConditions,
-  })));
+  for (const { name, start } of plugins) {
+    if (!name) {
+      throw new Error('Plugin must have a name');
+    }
+
+    try {
+      await start?.({
+        entrypoint,
+        basePath,
+        exportConditions,
+      });
+    } catch(e) {
+      const { stack } = /** @type {Error} */ (e);
+      const error = new Error(`[PLUGIN] "${name}" failed on the "start" hook.\n\n${stack}`);
+      throw error;
+    }
+  }
 
   const importsToScan = new Set([module]);
 
@@ -223,17 +235,23 @@ export async function createModuleGraph(entrypoint, options = {}) {
         /**
          * [PLUGINS] - handleImport
          */
-        for (const plugin of plugins) {
-          const result = await /** @type {void | boolean | string} */ (plugin.handleImport?.({
-            source,
-            importer: dep,
-            importee,
-          }));
-
-          if (typeof result === 'string') {
-            importee = result;
-          } else if (result === false) {
-            continue importLoop;
+        for (const { name, handleImport } of plugins) {
+          try {
+            const result = await /** @type {void | boolean | string} */ (handleImport?.({
+              source,
+              importer: dep,
+              importee,
+            }));
+  
+            if (typeof result === 'string') {
+              importee = result;
+            } else if (result === false) {
+              continue importLoop;
+            }
+          } catch(e) {
+            const { stack } = /** @type {Error} */ (e);
+            const error = new Error(`[PLUGIN] "${name}" failed on the "handleImport" hook.\n\n${stack}`);
+            throw error;
           }
         }
         /** Skip built-in modules like fs, path, etc */
@@ -242,18 +260,19 @@ export async function createModuleGraph(entrypoint, options = {}) {
           moduleGraph.externalDependencies.add(importee);
         }
 
-        try {
-          /**
-           * Resolve the module's location
-           */
-          const importer = pathToFileURL(path.join(basePath, dep));
 
-          /**
-           * [PLUGINS] - resolve
-           */
-          let resolvedURL;
-          for (const plugin of plugins) {
-            const result = await plugin.resolve?.({
+        /**
+         * Resolve the module's location
+         */
+        const importer = pathToFileURL(path.join(basePath, dep));
+
+        /**
+         * [PLUGINS] - resolve
+         */
+        let resolvedURL;
+        for (const { name, resolve } of plugins) {
+          try {
+            const result = await resolve?.({
               importee,
               importer,
               exportConditions,
@@ -264,72 +283,74 @@ export async function createModuleGraph(entrypoint, options = {}) {
               resolvedURL = result;
               break;
             }
+          } catch (e) {
+            const { stack } = /** @type {Error} */ (e);
+            const error = new Error(`[PLUGIN] "${name}" failed on the "resolve" hook.\n\n${stack}`);
+            throw error;
           }
+        }
 
-          /**
-           * If no plugins resolved the URL, defer to default resolution
-           */
-          if (!resolvedURL) {
-            resolvedURL = /** @type {URL} */ (await resolve(importee, importer.pathname));
-          }
-          const pathToDependency = path.posix.relative(basePath, fileURLToPath(resolvedURL));
+        /**
+         * If no plugins resolved the URL, defer to default resolution
+         */
+        if (!resolvedURL) {
+          resolvedURL = /** @type {URL} */ (await resolve(importee, importer.pathname));
+        }
+        const pathToDependency = path.posix.relative(basePath, fileURLToPath(resolvedURL));
 
-          /** 
-           * Get the packageRoot of the external dependency, which is useful for getting
-           * to the package.json, for example. You can't always `require.resolve` it, 
-           * if it's not included in the packages package exports.
-           */
-          let packageRoot;
-          if (pathToDependency.includes('node_modules')) {
-            const separator = 'node_modules' + path.posix.sep;
-            const lastIndex = resolvedURL.pathname.lastIndexOf(separator);
-            
-            const filePath = resolvedURL.pathname.substring(0, lastIndex + separator.length);
-            const importSpecifier = resolvedURL.pathname.substring(lastIndex + separator.length);
-            
-            /**
-             * @example "@foo/bar"
-             */
-            if (isScopedPackage(importSpecifier)) {
-              const split = importSpecifier.split('/');
-              const pkg = [split[0], split[1]].join('/');
-              packageRoot = path.posix.join(filePath, pkg);
-            } else {
-              const pkg = importSpecifier.split('/')[0];
-              packageRoot = path.posix.join(filePath, pkg);
-            }
-          }
-
-          /** @type {Module} */
-          const module = {
-            href: resolvedURL.href,
-            pathname: resolvedURL.pathname,
-            path: pathToDependency,
-            importedBy: [],
-            imports: [],
-            exports: [],
-            facade: false,
-            hasModuleSyntax: true,
-            source: '',
-            ...(packageRoot ? {packageRoot} : {}),
-          }
+        /** 
+         * Get the packageRoot of the external dependency, which is useful for getting
+         * to the package.json, for example. You can't always `require.resolve` it, 
+         * if it's not included in the packages package exports.
+         */
+        let packageRoot;
+        if (pathToDependency.includes('node_modules')) {
+          const separator = 'node_modules' + path.posix.sep;
+          const lastIndex = resolvedURL.pathname.lastIndexOf(separator);
           
-          importsToScan.add(pathToDependency);
+          const filePath = resolvedURL.pathname.substring(0, lastIndex + separator.length);
+          const importSpecifier = resolvedURL.pathname.substring(lastIndex + separator.length);
+          
+          /**
+           * @example "@foo/bar"
+           */
+          if (isScopedPackage(importSpecifier)) {
+            const split = importSpecifier.split('/');
+            const pkg = [split[0], split[1]].join('/');
+            packageRoot = path.posix.join(filePath, pkg);
+          } else {
+            const pkg = importSpecifier.split('/')[0];
+            packageRoot = path.posix.join(filePath, pkg);
+          }
+        }
 
-          if (!moduleGraph.modules.has(pathToDependency)) {
-            moduleGraph.modules.set(pathToDependency, module);
-          }
-          if (!moduleGraph.graph.has(dep)) {
-            moduleGraph.graph.set(dep, new Set());
-          }
-          /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(pathToDependency);
+        /** @type {Module} */
+        const module = {
+          href: resolvedURL.href,
+          pathname: resolvedURL.pathname,
+          path: pathToDependency,
+          importedBy: [],
+          imports: [],
+          exports: [],
+          facade: false,
+          hasModuleSyntax: true,
+          source: '',
+          ...(packageRoot ? {packageRoot} : {}),
+        }
+        
+        importsToScan.add(pathToDependency);
 
-          const importedModule = moduleGraph.modules.get(pathToDependency);
-          if (importedModule && !importedModule.importedBy.includes(dep)) {
-            importedModule.importedBy.push(dep);
-          }
-        } catch (e) {
-          console.log(`Failed to resolve dependency "${importee}".`, e);
+        if (!moduleGraph.modules.has(pathToDependency)) {
+          moduleGraph.modules.set(pathToDependency, module);
+        }
+        if (!moduleGraph.graph.has(dep)) {
+          moduleGraph.graph.set(dep, new Set());
+        }
+        /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(pathToDependency);
+
+        const importedModule = moduleGraph.modules.get(pathToDependency);
+        if (importedModule && !importedModule.importedBy.includes(dep)) {
+          importedModule.importedBy.push(dep);
         }
       };
 
@@ -347,8 +368,14 @@ export async function createModuleGraph(entrypoint, options = {}) {
       /**
        * [PLUGINS] - analyze
        */
-      for (const plugin of plugins) {
-        await plugin.analyze?.(currentModule);
+      for (const { name, analyze } of plugins) {
+        try {
+          await analyze?.(currentModule);
+        } catch(e) {
+          const { stack } = /** @type {Error} */ (e);
+          const error = new Error(`[PLUGIN] "${name}" failed on the "analyze" hook.\n\n${stack}`);
+          throw error;
+        }
       }
     };
   }
@@ -356,7 +383,15 @@ export async function createModuleGraph(entrypoint, options = {}) {
   /**
    * [PLUGINS] - end
    */
-  await Promise.all(plugins.map((plugin) => plugin.end?.(moduleGraph)));
+  for (const { name, end } of plugins) {
+    try {
+      await end?.(moduleGraph);
+    } catch(e) {
+      const { stack } = /** @type {Error} */ (e);
+      const error = new Error(`[PLUGIN] "${name}" failed on the "end" hook.\n\n${stack}`);
+      throw error;
+    }
+  }
 
   return moduleGraph;
 }
