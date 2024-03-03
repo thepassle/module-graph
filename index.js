@@ -96,7 +96,7 @@ export class ModuleGraph {
      * @param {string[]} path 
      * @returns 
      */
-    const dfs = (module, path,) => {
+    const dfs = (module, path) => {
       const condition =
         typeof targetModule === "function"
           ? targetModule(module)
