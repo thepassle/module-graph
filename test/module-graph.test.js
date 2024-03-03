@@ -156,6 +156,19 @@ describe('createModuleGraph', () => {
     assert(m.packageRoot.endsWith('test/fixtures/external-dependencies/node_modules/foo'));
   });
 
+  it('ignore-external', async () => {
+    /**
+     * a.js -> b.js -> foo
+     */
+    const moduleGraph = await createModuleGraph('./a.js', { 
+      basePath: fixture('ignore-external'),
+      ignoreExternal: true
+    });
+
+    assert.equal(moduleGraph.modules.size, 2);
+    assert.equal(moduleGraph.externalDependencies.size, 0);
+  });
+
   it('external-dependencies-scoped-package', async () => {
     /**
      * 'foo'

@@ -28,6 +28,8 @@ const moduleGraph = await createModuleGraph(['./foo.js', './bar.js']);
 const moduleGraph = await createModuleGraph('./index.js', {
   basePath: process.cwd(),
   exportConditions: ['browser', 'import'],
+  /** Ignores external modules */
+  ignoreExternal: true,
   plugins: [myPlugin]
 });
 ```

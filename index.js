@@ -19,6 +19,7 @@ import { isBareModuleSpecifier, isScopedPackage } from "./utils.js";
  * @param {RollupNodeResolveOptions & {
  *  plugins?: Plugin[],
  *  basePath?: string,
+ *  ignoreExternal?: boolean,
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
@@ -27,6 +28,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
     plugins = [], 
     basePath = process.cwd(), 
     exportConditions = [],
+    ignoreExternal = false,
     ...resolveOptions 
   } = options;
 
@@ -119,7 +121,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       const [imports, exports, facade, hasModuleSyntax] = parse(source);
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
-
+        if (isBareModuleSpecifier(importee) && ignoreExternal) continue;
         /**
          * [PLUGINS] - handleImport
          */
