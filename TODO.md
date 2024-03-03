@@ -16,15 +16,5 @@ Maybe something like:
 ## Detect and ignore cjs?
 
 Or maybe I can just use esm-shims `hasModuleSyntax` for this?
-
-Can use [fmu](https://github.com/bluwy/fmu) to detect cjs and bail
-
-```js
-import { init, guessJsSyntax } from 'fmu'
-
-// initialize wasm (MUST call this before any other APIs)
-await init()
-
-const code = `exports.foo = 'bar'`
-console.log(await guessJsSyntax(code)) // "CJS"
-```
+`hasModuleSyntax` is false for a module containing only `import('foo')`, because cjs can use `import()`
+But if a module does not `hasModuleSyntax`, and there _are_ imports (`!!imports.length`), we can continu analyzing maybe?
