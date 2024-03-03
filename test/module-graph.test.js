@@ -44,6 +44,46 @@ describe('createModuleGraph', () => {
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
   });
 
+  it('multiple-entrypoints', async () => {
+    const moduleGraph = await createModuleGraph(['./a.js', './c.js'], { basePath: fixture('multiple-entrypoints') });
+
+    assert(moduleGraph.modules.size, 3);
+  });
+
+  it('multiple-entrypoints-import-chains', async () => {
+    /**
+     * a.js -> b.js -> c.js
+     * d.js -> c.js
+     */
+    const moduleGraph = await createModuleGraph(['./a.js', './d.js'], { basePath: fixture('multiple-entrypoints-import-chains') });
+    
+    const chains = moduleGraph.findImportChains((p) => p.endsWith('c.js'));
+    assert.deepStrictEqual(chains[0], ['a.js', 'b.js', 'c.js']);
+    assert.deepStrictEqual(chains[1], ['d.js', 'c.js']);
+  });
+
+  it('circular', async () => {
+    /**
+     * a.js -> b.js -> c.js -> a.js
+     * 
+     * Doesn't result in an infinite loop
+     */
+    const moduleGraph = await createModuleGraph('./a.js', { basePath: fixture('circular') });
+    assert.equal(moduleGraph.modules.size, 3);
+  });
+
+  it('multiple-entrypoints-import-chains-circular', async () => {
+    /**
+     * a.js -> b.js -> c.js -> d.js
+     * d.js -> c.js
+     */
+    const moduleGraph = await createModuleGraph(['./a.js', './d.js'], { basePath: fixture('multiple-entrypoints-import-chains-circular') });
+    
+    const chains = moduleGraph.findImportChains((p) => p.endsWith('c.js'));
+    assert.deepStrictEqual(chains[0], ['a.js', 'b.js', 'c.js']);
+    assert.deepStrictEqual(chains[1], ['d.js', 'c.js']);
+  });
+
   it('typescript', async () => {
     const moduleGraph = await createModuleGraph('./index.ts', { 
       basePath: fixture('typescript'),
@@ -147,8 +187,8 @@ describe('plugins', () => {
   it('start', async () => {
     const plugin = {
       name: 'start-plugin',
-      start: ({ entrypoint, basePath, exportConditions }) => {
-        assert.equal(entrypoint, './index.js');
+      start: ({ entrypoints, basePath, exportConditions }) => {
+        assert.deepStrictEqual(entrypoints, ['index.js']);
         assert.equal(basePath, fixture('plugins-start'));
         assert.deepStrictEqual(exportConditions, []);
       }

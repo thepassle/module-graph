@@ -1,13 +1,5 @@
 # TODO
 
-## Multiple entrypoints
-
-Example:
-
-```js
-const moduleGraph = await createModuleGraph(['./foo.js', './bar.js']);
-```
-
 ## Track nested dependencies/multiple versions of dependencies
 
 Maybe something like:

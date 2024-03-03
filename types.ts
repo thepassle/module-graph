@@ -22,12 +22,12 @@ export interface Plugin {
    * Use for initializing logic of the plugin
    */
   start?: (params: {
-    entrypoint: string,
+    entrypoints: string[],
     basePath: string,
     exportConditions: string[],
   }) => void | Promise<void>;
   /**
-   * Runs for every import starting (but excluding) the entrypoint
+   * Runs for every import starting (but excluding) the entrypoints
    * Can be used to implement custom logic or rewrite a specifier
    * If false is returned, the import will be skipped entirely
    * If a string is returned, it will try to resolve that instead
@@ -45,7 +45,7 @@ export interface Plugin {
    */
   analyze?: (module: Module) => void | Promise<void>;
   /**
-   * Runs for every import starting (but excluding) the entrypoint
+   * Runs for every import starting (but excluding) the entrypoints
    * Can be used to implement custom resolution logic
    * If nothing is returned, the default resolution will be used
    * If a URL is returned, it will output that instead

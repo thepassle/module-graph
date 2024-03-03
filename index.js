@@ -13,11 +13,6 @@ import { moduleResolve } from "import-meta-resolve";
  */
 
 /**
- * @TODO
- * - multiple entrypoints? ['./index.js', './foo.js']
- */
-
-/**
  * @param {string} specifier
  * @returns {boolean}
  */
@@ -32,14 +27,14 @@ export const isScopedPackage = (specifier) => specifier.startsWith('@');
 export class ModuleGraph {
   /**
    * @param {string} basePath
-   * @param {string} entrypoint
+   * @param {string | string[]} entrypoints
    */
-  constructor(basePath, entrypoint) {
+  constructor(basePath, entrypoints) {
     /**
      * @type {Map<string, Set<string>>}
      */
     this.graph = new Map();
-    this.entrypoint = path.posix.normalize(entrypoint);
+    this.entrypoints = (typeof entrypoints === 'string' ? [entrypoints] : entrypoints).map(e => path.posix.normalize(e));
     this.basePath = basePath;
     /**
      * @TODO This doesn't take into account nested dependencies
@@ -97,12 +92,11 @@ export class ModuleGraph {
     const chains = [];
 
     /**
-     * 
      * @param {string} module 
      * @param {string[]} path 
      * @returns 
      */
-    const dfs = (module, path) => {
+    const dfs = (module, path,) => {
       const condition =
         typeof targetModule === "function"
           ? targetModule(module)
@@ -115,29 +109,28 @@ export class ModuleGraph {
       const dependencies = this.graph.get(module);
       if (dependencies) {
         for (const dependency of dependencies) {
-          if (!path.includes(dependency)) {
-            dfs(dependency, [...path, dependency]);
-          }
+          dfs(dependency, [...path, dependency]);
         }
       }
     };
 
-    dfs(this.entrypoint, [this.entrypoint]);
+    for (const entrypoint of this.entrypoints) {
+      dfs(entrypoint, [entrypoint]);
+    }
 
     return chains;
   }
 }
 
 /**
- *
- * @param {string} entrypoint
+ * @param {string | string[]} entrypoints
  * @param {RollupNodeResolveOptions & {
  *  plugins?: Plugin[],
  *  basePath?: string,
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
-export async function createModuleGraph(entrypoint, options = {}) {
+export async function createModuleGraph(entrypoints, options = {}) {
   const { 
     plugins = [], 
     basePath = process.cwd(), 
@@ -176,12 +169,14 @@ export async function createModuleGraph(entrypoint, options = {}) {
     return pathToFileURL(resolved.id);
   }
 
-  const module = path.posix.relative(
-    basePath,
-    fileURLToPath(
-      moduleResolve(entrypoint, pathToFileURL(path.join(basePath, entrypoint)))
-    )
-  );
+  const modules = (typeof entrypoints === "string" ? [entrypoints] : entrypoints).map(e => {
+    return path.posix.relative(
+      basePath,
+      fileURLToPath(
+        moduleResolve(e, pathToFileURL(path.join(basePath, e)))
+      )
+    );
+  });
 
   /**
    * [PLUGINS] - start
@@ -193,7 +188,7 @@ export async function createModuleGraph(entrypoint, options = {}) {
 
     try {
       await start?.({
-        entrypoint,
+        entrypoints: modules,
         basePath,
         exportConditions,
       });
@@ -204,21 +199,22 @@ export async function createModuleGraph(entrypoint, options = {}) {
     }
   }
 
-  const importsToScan = new Set([module]);
+  const importsToScan = new Set([...modules]);
 
-  let moduleGraph = new ModuleGraph(basePath, entrypoint);
-  moduleGraph.modules.set(module, {
-    href: pathToFileURL(module).href,
-    pathname: pathToFileURL(module).pathname,
-    path: module,
-    source: '',
-    imports: [],
-    exports: [],
-    facade: false,
-    hasModuleSyntax: true,
-    importedBy: []
-  });
-  
+  let moduleGraph = new ModuleGraph(basePath, entrypoints);
+  for (const module of modules) {
+    moduleGraph.modules.set(module, {
+      href: pathToFileURL(module).href,
+      pathname: pathToFileURL(module).pathname,
+      path: module,
+      source: '',
+      imports: [],
+      exports: [],
+      facade: false,
+      hasModuleSyntax: true,
+      importedBy: []
+    });
+  }
 
   /** Init es-module-lexer wasm */
   await init;
@@ -338,7 +334,9 @@ export async function createModuleGraph(entrypoint, options = {}) {
           ...(packageRoot ? {packageRoot} : {}),
         }
         
-        importsToScan.add(pathToDependency);
+        if (!moduleGraph.graph.has(pathToDependency)) {
+          importsToScan.add(pathToDependency);
+        }
 
         if (!moduleGraph.modules.has(pathToDependency)) {
           moduleGraph.modules.set(pathToDependency, module);

@@ -16,6 +16,11 @@ import { createModuleGraph } from '@thepassle/module-graph';
 const moduleGraph = await createModuleGraph('./index.js');
 
 /**
+ * Multiple entrypoints
+ */
+const moduleGraph = await createModuleGraph(['./foo.js', './bar.js']);
+
+/**
  * Configuration options
  * Supports all `@rollup/plugin-node-resolve`'s `RollupNodeResolveOptions` options.
  * https://www.npmjs.com/package/@rollup/plugin-node-resolve#options
@@ -94,7 +99,7 @@ Use for initializing logic of the plugin
 ```js
 const plugin = {
   name: 'my-plugin',
-  start: ({entrypoint, basePath, exportConditions}) => {
+  start: ({entrypoints, basePath, exportConditions}) => {
     console.log('Plugin start');
   }
 }
@@ -106,7 +111,7 @@ const moduleGraph = await createModuleGraph('./index.js', {
 
 #### `handleImport`
 
-> Runs for every import starting (but excluding) the entrypoint
+> Runs for every import starting (but excluding) the entrypoints
 
 Can be used to implement custom logic or rewrite a specifier
 
