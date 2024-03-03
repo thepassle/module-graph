@@ -1,4 +1,4 @@
-import { ModuleGraph } from './index.js';
+import { ModuleGraph } from './ModuleGraph.js';
 import type { ImportSpecifier, ExportSpecifier } from 'es-module-lexer';
 import type { RollupNodeResolveOptions } from '@rollup/plugin-node-resolve';
 

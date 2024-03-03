@@ -1,7 +1,7 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.3.0",
-  "description": "",
+  "version": "0.3.1",
+  "description": "Creates a module graph based on a given entrypoint.",
   "scripts": {
     "start": "node --watch index.js",
     "test": "node --test --experimental-test-coverage test/module-graph.test.js",
@@ -15,6 +15,14 @@
       "types": "./dist-types/index.d.ts",
       "default": "./index.js"
     },
+    "./ModuleGraph.js": {
+      "types": "./dist-types/ModuleGraph.d.ts",
+      "default": "./ModuleGraph.js"
+    },
+    "./utils.js": {
+      "types": "./dist-types/utils.d.ts",
+      "default": "./utils.js"
+    },
     "./plugins/typescript.js": {
       "types": "./dist-types/plugins/typescript.d.ts",
       "default": "./plugins/typescript.js"
@@ -24,6 +32,8 @@
     "README.md",
     "dist-types",
     "index.js",
+    "ModuleGraph.js",
+    "utils.js",
     "plugins/*.js"
   ],
   "keywords": [],

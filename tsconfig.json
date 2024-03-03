@@ -14,7 +14,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "index.js",
+    "*.js",
     "plugins/*.js",
     "types.ts"
   ],
