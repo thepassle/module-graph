@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node --watch index.js",
     "test": "node --test --experimental-test-coverage test/module-graph.test.js",
-    "test:watch": "node --test-only --watch test/module-graph.test.js",
+    "test:watch": "node --test --watch test/module-graph.test.js",
     "lint:types": "tsc",
     "lint:types:watch": "tsc --watch",
     "prepublishOnly": "tsc && npm test"

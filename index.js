@@ -57,7 +57,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
    * @returns {Promise<URL | undefined>}
    */
   async function resolve(importee, importer, options = {}) {
-    console.log(111, importee, importer)
     const resolved = await resolveFn(importee, importer, options);
     return pathToFileURL(resolved.id);
   }

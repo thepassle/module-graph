@@ -7,6 +7,8 @@ import { isBareModuleSpecifier } from '../utils.js';
 import { typescript } from '../plugins/typescript.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
+const toUnix = p => p.replace(/\\/g, '/');
+const unixify = (path) => (p) => toUnix(p) === path;
 
 describe('utils', () => {
   it('isBareModuleSpecifier', () => {
@@ -172,13 +174,12 @@ describe.only('createModuleGraph', () => {
     assert.equal(moduleGraph.modules.size, 1);
   });
 
-  it.only('external-dependencies', async () => {
+  it('external-dependencies', async () => {
     /**
      * 'foo'
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies') });
-    const m = moduleGraph.get('node_modules/foo/index.js');
-
+    const m = moduleGraph.get(unixify('node_modules/foo/index.js'));
     assert(m.packageRoot.endsWith('test/fixtures/external-dependencies/node_modules/foo'));
   });
 
@@ -195,31 +196,31 @@ describe.only('createModuleGraph', () => {
     assert.equal(moduleGraph.externalDependencies.size, 0);
   });
 
-  // it('external-dependencies-scoped-package', async () => {
-  //   /**
-  //    * 'foo'
-  //    */
-  //   const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies-scoped-package') });
-  //   const m = moduleGraph.get('node_modules/@foo/bar/index.js');
+  it('external-dependencies-scoped-package', async () => {
+    /**
+     * 'foo'
+     */
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies-scoped-package') });
+    const m = moduleGraph.get(unixify('node_modules/@foo/bar/index.js'));
 
-  //   assert(m.packageRoot.endsWith('test/fixtures/external-dependencies-scoped-package/node_modules/@foo/bar'));
-  // });
+    assert(m.packageRoot.endsWith('test/fixtures/external-dependencies-scoped-package/node_modules/@foo/bar'));
+  });
 
-  // it('external-package-exports-regular', async () => {
-  //   /**
-  //    * 'foo' with package exports ".": "./foo.js"
-  //    */
-  //   const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-package-exports-regular') });
-  //   const m = moduleGraph.get('node_modules/foo/foo.js');
+  it('external-package-exports-regular', async () => {
+    /**
+     * 'foo' with package exports ".": "./foo.js"
+     */
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-package-exports-regular') });
+    const m = moduleGraph.get(unixify('node_modules/foo/foo.js'));
 
-  //   assert(m.packageRoot.endsWith('test/fixtures/external-package-exports-regular/node_modules/foo'));
-  // });
+    assert(m.packageRoot.endsWith('test/fixtures/external-package-exports-regular/node_modules/foo'));
+  });
 
-  // it('monorepo', async () => {
-  //   const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('monorepo/packages/foo') });
-  //   const m = moduleGraph.get('../../node_modules/bar/index.js');
-  //   assert(m.packageRoot.endsWith('monorepo/node_modules/bar'));
-  // });
+  it('monorepo', async () => {
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('monorepo/packages/foo') });
+    const m = moduleGraph.get(unixify('../../node_modules/bar/index.js'));
+    assert(m.packageRoot.endsWith('monorepo/node_modules/bar'));
+  });
 });
 
 describe('plugins', () => {
