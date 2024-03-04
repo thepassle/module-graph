@@ -48,7 +48,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
     exportConditions,
     rootDir: basePath,
   });
-  // @ts-expect-error
   const resolveFn = r.resolveId.handler.bind({resolve: () => null});
 
   /**
@@ -58,14 +57,15 @@ export async function createModuleGraph(entrypoints, options = {}) {
    * @returns {Promise<URL | undefined>}
    */
   async function resolve(importee, importer, options = {}) {
+    console.log(111, importee, importer)
     const resolved = await resolveFn(importee, importer, options);
     return pathToFileURL(resolved.id);
   }
 
   const processedEntrypoints = (typeof entrypoints === "string" ? [entrypoints] : entrypoints);
   const modules = await Promise.all(processedEntrypoints.map(async e => {
-    const resolved = /** @type {URL} */ (await resolve(e, pathToFileURL(path.join(basePath, e)).pathname));
-    return path.posix.relative(basePath, fileURLToPath(resolved));
+    const resolved = /** @type {URL} */ (await resolve(e, path.join(basePath, e)));
+    return path.relative(basePath, fileURLToPath(resolved));
   }));
 
   /**
@@ -150,7 +150,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
         /**
          * Resolve the module's location
          */
-        const importer = pathToFileURL(path.join(basePath, dep));
+        const importer = path.join(basePath, dep);
 
         /**
          * [PLUGINS] - resolve
@@ -180,10 +180,9 @@ export async function createModuleGraph(entrypoints, options = {}) {
          * If no plugins resolved the URL, defer to default resolution
          */
         if (!resolvedURL) {
-          resolvedURL = /** @type {URL} */ (await resolve(importee, importer.pathname));
+          resolvedURL = /** @type {URL} */ (await resolve(importee, importer));
         }
-        const pathToDependency = path.posix.relative(basePath, fileURLToPath(resolvedURL));
-
+        const pathToDependency = path.relative(basePath, fileURLToPath(resolvedURL));
         /** 
          * Get the packageRoot of the external dependency, which is useful for getting
          * to the package.json, for example. You can't always `require.resolve` it, 
