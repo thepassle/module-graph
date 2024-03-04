@@ -13,6 +13,11 @@ Maybe something like:
 }
 ```
 
+## `externalOnly`
+
+foo -> bar -> baz
+         \_ qux
+
 ## Detect and ignore cjs?
 
 Or maybe I can just use esm-shims `hasModuleSyntax` for this?

@@ -3,9 +3,21 @@ import assert from 'node:assert';
 import path from 'node:path';
 import { moduleResolve } from 'import-meta-resolve';
 import { createModuleGraph } from '../index.js';
+import { isBareModuleSpecifier } from '../utils.js';
 import { typescript } from '../plugins/typescript.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
+
+describe('utils', () => {
+  it('isBareModuleSpecifier', () => {
+    assert(isBareModuleSpecifier('foo'));
+    assert(isBareModuleSpecifier('@foo/bar'));
+    assert(!isBareModuleSpecifier('/Users/foo/bar/baz.js'));
+    assert(!isBareModuleSpecifier('./foo'));
+    assert(!isBareModuleSpecifier('../foo'));
+    assert(!isBareModuleSpecifier('#private'));
+  });
+});
 
 describe('createModuleGraph', () => {
 
@@ -42,6 +54,20 @@ describe('createModuleGraph', () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('dynamic-import') });
 
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
+  });
+
+  it('dynamic-import-in-cjs', async () => {
+    /**
+     * Ignores `requires`, but still follows dynamic imports
+     */
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('dynamic-import-in-cjs') });
+
+    assert(moduleGraph.graph.get('index.js').has('foo.js'));
+    // `foo.js` dynamically imports `baz.js`
+    assert(moduleGraph.graph.get('foo.js').has('baz.js'));
+    // `foo.js` `require`s `bar.js`, but it's not included in the graph
+    assert.equal(moduleGraph.graph.get('foo.js').has('bar.js'), false);
+    assert(moduleGraph.graph.get('baz.js').has('qux.js'));
   });
 
   it('multiple-entrypoints', async () => {
