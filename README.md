@@ -45,6 +45,8 @@ const moduleGraph = await createModuleGraph('./index.ts', {
 });
 ```
 
+`createModuleGraph` analyzes only ESM-style imports, not `require`. However, if a CommonJS file is found and uses a dynamic import, it will include the dynamic import in the graph and any other imports that leads to.
+
 ## `ModuleGraph`
 
 ### `get`
