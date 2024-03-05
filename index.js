@@ -48,6 +48,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
     exportConditions,
     rootDir: basePath,
   });
+  // @ts-expect-error
   const resolveFn = r.resolveId.handler.bind({resolve: () => null});
 
   /**
