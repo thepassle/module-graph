@@ -1,6 +1,6 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Creates a module graph based on a given entrypoint.",
   "scripts": {
     "start": "node --watch index.js",
