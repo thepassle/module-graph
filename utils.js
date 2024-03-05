@@ -9,3 +9,10 @@ export const isBareModuleSpecifier = (specifier) => !!specifier?.replace(/'/g, '
  * @returns {boolean}
  */
 export const isScopedPackage = (specifier) => specifier.startsWith('@');
+
+/**
+ * 
+ * @param {string} p 
+ * @returns {string}
+ */
+export const toUnix = p => p.replace(/\\/g, '/');

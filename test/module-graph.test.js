@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { moduleResolve } from 'import-meta-resolve';
 import { createModuleGraph } from '../index.js';
 import { isBareModuleSpecifier } from '../utils.js';
@@ -8,7 +9,6 @@ import { typescript } from '../plugins/typescript.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
 const toUnix = p => p.replace(/\\/g, '/');
-const unixify = (path) => (p) => toUnix(p) === path;
 
 describe('utils', () => {
   it('isBareModuleSpecifier', () => {
@@ -21,7 +21,7 @@ describe('utils', () => {
   });
 });
 
-describe.only('createModuleGraph', () => {
+describe('createModuleGraph', () => {
 
   it('graph-simple', async () => {
     /**
@@ -112,15 +112,15 @@ describe.only('createModuleGraph', () => {
     assert.deepStrictEqual(chains[1], ['d.js', 'c.js']);
   });
 
-  // it('typescript', async () => {
-  //   const moduleGraph = await createModuleGraph('./index.ts', { 
-  //     basePath: fixture('typescript'),
-  //     plugins: [typescript()]
-  //   });
+  it('typescript', async () => {
+    const moduleGraph = await createModuleGraph('./index.ts', { 
+      basePath: fixture('typescript'),
+      plugins: [typescript()]
+    });
 
-  //   assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
-  //   assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
-  // });
+    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
+    assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
+  });
   
   it('require-in-chain', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('require-in-chain') });
@@ -179,8 +179,9 @@ describe.only('createModuleGraph', () => {
      * 'foo'
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies') });
-    const m = moduleGraph.get(unixify('node_modules/foo/index.js'));
-    assert(m.packageRoot.endsWith('test/fixtures/external-dependencies/node_modules/foo'));
+    const m = moduleGraph.get('node_modules/foo/index.js');
+    
+    assert(m.packageRoot.pathname.endsWith('test/fixtures/external-dependencies/node_modules/foo'));
   });
 
   it('ignore-external', async () => {
@@ -201,9 +202,9 @@ describe.only('createModuleGraph', () => {
      * 'foo'
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies-scoped-package') });
-    const m = moduleGraph.get(unixify('node_modules/@foo/bar/index.js'));
-
-    assert(m.packageRoot.endsWith('test/fixtures/external-dependencies-scoped-package/node_modules/@foo/bar'));
+    const m = moduleGraph.get('node_modules/@foo/bar/index.js');
+    
+    assert(m.packageRoot.pathname.endsWith('test/fixtures/external-dependencies-scoped-package/node_modules/@foo/bar'));
   });
 
   it('external-package-exports-regular', async () => {
@@ -211,15 +212,15 @@ describe.only('createModuleGraph', () => {
      * 'foo' with package exports ".": "./foo.js"
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-package-exports-regular') });
-    const m = moduleGraph.get(unixify('node_modules/foo/foo.js'));
+    const m = moduleGraph.get('node_modules/foo/foo.js');
 
-    assert(m.packageRoot.endsWith('test/fixtures/external-package-exports-regular/node_modules/foo'));
+    assert(m.packageRoot.pathname.endsWith('test/fixtures/external-package-exports-regular/node_modules/foo'));
   });
 
   it('monorepo', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('monorepo/packages/foo') });
-    const m = moduleGraph.get(unixify('../../node_modules/bar/index.js'));
-    assert(m.packageRoot.endsWith('monorepo/node_modules/bar'));
+    const m = moduleGraph.get('../../node_modules/bar/index.js');
+    assert(m.packageRoot.pathname.endsWith('monorepo/node_modules/bar'));
   });
 });
 
@@ -230,7 +231,7 @@ describe('plugins', () => {
       start: ({ entrypoints, basePath, exportConditions }) => {
         assert.deepStrictEqual(entrypoints, ['index.js']);
         assert.equal(basePath, fixture('plugins-start'));
-        assert.deepStrictEqual(exportConditions, []);
+        assert.deepStrictEqual(exportConditions, ["node", "import"]);
       }
     }
     await createModuleGraph('./index.js', { 
@@ -307,53 +308,53 @@ describe('plugins', () => {
     assert.deepStrictEqual(moduleGraph.getUniqueModules(), ['index.js', 'baz.js', 'bar.js']);
   });
 
-//   it('resolve', async () => {
-//     /**
-//      * index.js -> bar.js
-//      */
+  it('resolve', async () => {
+    /**
+     * index.js -> bar.js
+     */
 
-//     const resolvePlugin = {
-//       name: 'skip-plugin',
-//       resolve: ({ importee, importer, exportConditions }) => {
-//         /**
-//          * Rewrite `./bar.js` (importee) to `./baz.js`
-//          */
-//         return moduleResolve('./baz.js', importer, exportConditions);
-//       }
-//     }
+    const resolvePlugin = {
+      name: 'resolve-plugin',
+      resolve: ({ importee, importer, exportConditions }) => {
+        /**
+         * Rewrite `./bar.js` (importee) to `./baz.js`
+         */
+        return moduleResolve('./baz.js', pathToFileURL(importer), exportConditions);
+      }
+    }
     
-//     const moduleGraph = await createModuleGraph('./index.js', { 
-//       basePath: fixture('plugins-resolve'),
-//       plugins: [resolvePlugin]
-//     });
+    const moduleGraph = await createModuleGraph('./index.js', { 
+      basePath: fixture('plugins-resolve'),
+      plugins: [resolvePlugin]
+    });
 
-//     assert.deepStrictEqual(moduleGraph.getUniqueModules(), ['index.js', 'baz.js']);
-//   });
+    assert.deepStrictEqual(moduleGraph.getUniqueModules(), ['index.js', 'baz.js']);
+  });
 
-  // it('resolve multiple', async () => {
-  //   const resolvePlugin1 = {
-  //     name: 'skip-plugin',
-  //     resolve: ({ importee, importer, exportConditions }) => {
-  //       return moduleResolve('./baz.js', importer, exportConditions);
-  //     }
-  //   }
+  it('resolve multiple', async () => {
+    const resolvePlugin1 = {
+      name: 'skip-plugin',
+      resolve: ({ importee, importer, exportConditions }) => {
+        return moduleResolve('./baz.js', pathToFileURL(importer), exportConditions);
+      }
+    }
 
-  //   let called = false;
-  //   const resolvePlugin2 = {
-  //     name: 'skip-plugin',
-  //     resolve: ({ importee, importer, exportConditions }) => {
-  //       called = true;
-  //     }
-  //   }
+    let called = false;
+    const resolvePlugin2 = {
+      name: 'skip-plugin',
+      resolve: ({ importee, importer, exportConditions }) => {
+        called = true;
+      }
+    }
     
-  //   const moduleGraph = await createModuleGraph('./index.js', { 
-  //     basePath: fixture('plugins-resolve'),
-  //     plugins: [resolvePlugin1, resolvePlugin2]
-  //   });
+    const moduleGraph = await createModuleGraph('./index.js', { 
+      basePath: fixture('plugins-resolve'),
+      plugins: [resolvePlugin1, resolvePlugin2]
+    });
 
-  //   /** `resolvePlugin1` has already resolved the module, so `resolvePlugin2`'s `resolve` hook gets skipped */
-  //   assert.equal(called, false);
-  // });
+    /** `resolvePlugin1` has already resolved the module, so `resolvePlugin2`'s `resolve` hook gets skipped */
+    assert.equal(called, false);
+  });
 
   it('analyze', async () => {
     const analyzePlugin = {

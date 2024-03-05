@@ -15,7 +15,7 @@ export function typescript() {
   return {
     name: 'typescript',
     async resolve({importer, importee}) {
-      const resolved = await ts.resolveId(importee, importer.pathname);
+      const resolved = await ts.resolveId(importee, importer);
       if (resolved) {
         return pathToFileURL(resolved);
       }

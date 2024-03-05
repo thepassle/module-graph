@@ -5,7 +5,7 @@ import { builtinModules } from "module";
 import { init, parse } from "es-module-lexer";
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { ModuleGraph } from "./ModuleGraph.js";
-import { isBareModuleSpecifier, isScopedPackage } from "./utils.js";
+import { isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
 
 /**
  * @typedef {import('./types.js').Module} Module
@@ -26,7 +26,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
   const { 
     plugins = [], 
     basePath = process.cwd(), 
-    exportConditions = [],
+    exportConditions = ["node", "import"],
     ignoreExternal = false,
     ...resolveOptions 
   } = options;
@@ -189,22 +189,22 @@ export async function createModuleGraph(entrypoints, options = {}) {
          */
         let packageRoot;
         if (pathToDependency.includes('node_modules')) {
-          const separator = 'node_modules' + path.posix.sep;
-          const lastIndex = resolvedURL.pathname.lastIndexOf(separator);
-          
-          const filePath = resolvedURL.pathname.substring(0, lastIndex + separator.length);
-          const importSpecifier = resolvedURL.pathname.substring(lastIndex + separator.length);
-          
+          const resolvedPath = fileURLToPath(resolvedURL);
+          const separator = 'node_modules' + path.sep;
+          const lastIndex = resolvedPath.lastIndexOf(separator);
+
+          const filePath = resolvedPath.substring(0, lastIndex + separator.length);
+          const importSpecifier = resolvedPath.substring(lastIndex + separator.length);
           /**
            * @example "@foo/bar"
            */
           if (isScopedPackage(importSpecifier)) {
-            const split = importSpecifier.split('/');
-            const pkg = [split[0], split[1]].join('/');
-            packageRoot = path.posix.join(filePath, pkg);
+            const split = importSpecifier.split(path.sep);
+            const pkg = [split[0], split[1]].join(path.sep);
+            packageRoot = pathToFileURL(path.join(filePath, pkg));
           } else {
-            const pkg = importSpecifier.split('/')[0];
-            packageRoot = path.posix.join(filePath, pkg);
+            const pkg = importSpecifier.split(path.sep)[0];
+            packageRoot = pathToFileURL(path.join(filePath, pkg));
           }
         }
 
@@ -227,12 +227,12 @@ export async function createModuleGraph(entrypoints, options = {}) {
         }
 
         if (!moduleGraph.modules.has(pathToDependency)) {
-          moduleGraph.modules.set(pathToDependency, module);
+          moduleGraph.modules.set(toUnix(pathToDependency), module);
         }
         if (!moduleGraph.graph.has(dep)) {
-          moduleGraph.graph.set(dep, new Set());
+          moduleGraph.graph.set(toUnix(dep), new Set());
         }
-        /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(pathToDependency);
+        /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(toUnix(pathToDependency));
 
         const importedModule = moduleGraph.modules.get(pathToDependency);
         if (importedModule && !importedModule.importedBy.includes(dep)) {
@@ -244,7 +244,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
        * Add `source` code to the Module, and apply the `analyze` function
        * from the options, if it's provided.
        */
-      const currentModule = /** @type {Module} */ (moduleGraph.modules.get(dep));
+      const currentModule = /** @type {Module} */ (moduleGraph.modules.get(toUnix(dep)));
       currentModule.source = source;
       currentModule.exports = exports;
       currentModule.imports = imports;
