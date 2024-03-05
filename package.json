@@ -41,6 +41,7 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/node": "^20.11.24",
     "import-meta-resolve": "^4.0.0",
     "typescript": "^5.3.3"
   },
