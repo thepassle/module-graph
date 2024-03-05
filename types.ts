@@ -7,7 +7,7 @@ export interface Module {
   pathname: string,
   path: string,
   source: string,
-  packageRoot?: string,
+  packageRoot?: URL,
   imports: readonly ImportSpecifier[],
   exports: readonly ExportSpecifier[],
   facade: boolean,
@@ -52,7 +52,7 @@ export interface Plugin {
    */
   resolve?: (params: {
     importee: string,
-    importer: URL,
+    importer: string,
     exportConditions: string[],
   } & RollupNodeResolveOptions) => URL | void | Promise<void | URL>;
   /**

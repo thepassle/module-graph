@@ -58,7 +58,7 @@ export class ModuleGraph {
       }
     }
 
-    return [...uniqueModules].map((p) => path.posix.relative(this.basePath, path.join(this.basePath, p)));
+    return [...uniqueModules].map((p) => path.relative(this.basePath, path.join(this.basePath, p)));
   }
 
   /**
