@@ -122,6 +122,7 @@ describe.only("createModuleGraph", () => {
             function collect(source, filePath) {
               visitNode(source);
 
+              // @TODO analyze dynamic imports
               function visitNode(node) {
                 /**
                  * IMPORTS
@@ -289,10 +290,6 @@ describe.only("createModuleGraph", () => {
                           .replace(/'/g, "");
                       }
                       exports.push(_export);
-                      // moduleDoc.exports = [
-                      //   ...(moduleDoc.exports || []),
-                      //   _export,
-                      // ];
                     });
                   }
                 }
@@ -312,7 +309,6 @@ describe.only("createModuleGraph", () => {
                       },
                     };
                     exports.push(_export);
-                    // moduleDoc.exports = [...(moduleDoc.exports || []), _export];
                   }
                 }
 
@@ -351,13 +347,11 @@ describe.only("createModuleGraph", () => {
                 for (const modules of moduleGraph.modules.values()) {
                   const foundExport = modules.collectedImports.find(i => i.name === _export.name && i.module === _export.declaration.module)
                   isImported = foundExport || isImported;
-                  // console.log(1, {foundExport, isImported});
                 }
 
                 if (!isImported) {
                   console.log(`"${_export.name}" from "${_export.declaration.module}" is not imported by anything`)
                 }
-                // console.log(1, _export);
               }
             }
           }
