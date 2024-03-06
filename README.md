@@ -30,6 +30,9 @@ const moduleGraph = await createModuleGraph('./index.js', {
   exportConditions: ['browser', 'import'],
   /** Ignores external modules */
   ignoreExternal: true,
+  exclude: [
+    (importee) => importee.endsWith('ignore.js')
+  ],
   plugins: [myPlugin]
 });
 ```

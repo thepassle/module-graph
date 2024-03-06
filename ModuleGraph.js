@@ -1,4 +1,5 @@
 import path from "path";
+import { toUnix } from "./utils.js";
 
 /**
  * @typedef {import('./types.js').Module} Module
@@ -58,7 +59,7 @@ export class ModuleGraph {
       }
     }
 
-    return [...uniqueModules].map((p) => path.relative(this.basePath, path.join(this.basePath, p)));
+    return [...uniqueModules].map((p) => toUnix(path.relative(this.basePath, path.join(this.basePath, p))));
   }
 
   /**

@@ -8,7 +8,6 @@ import { isBareModuleSpecifier } from '../utils.js';
 import { typescript } from '../plugins/typescript.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
-const toUnix = p => p.replace(/\\/g, '/');
 
 describe('utils', () => {
   it('isBareModuleSpecifier', () => {
@@ -371,5 +370,17 @@ describe('plugins', () => {
     });
 
     assert(moduleGraph.get('bar.js').usesProcessEnv);
+  });
+
+  it('exclude', async () => {
+    const moduleGraph = await createModuleGraph('./index.js', { 
+      basePath: fixture('exclude'),
+      exclude: [
+        (importee) => importee.endsWith('ignore-me.js'),
+        (importee) => importee.endsWith('ignore.js'),
+      ]
+    });
+
+    assert.deepStrictEqual(moduleGraph.getUniqueModules(), ["index.js", "foo.js", "bar.js", "node_modules/qux/index.js"]);
   });
 });

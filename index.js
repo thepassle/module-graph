@@ -19,6 +19,7 @@ import { isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
  *  plugins?: Plugin[],
  *  basePath?: string,
  *  ignoreExternal?: boolean,
+ *  exclude?: Array<(p: string) => boolean>,
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
@@ -28,6 +29,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
     basePath = process.cwd(), 
     exportConditions = ["node", "import"],
     ignoreExternal = false,
+    exclude = [],
     ...resolveOptions 
   } = options;
 
@@ -119,6 +121,8 @@ export async function createModuleGraph(entrypoints, options = {}) {
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
         if (isBareModuleSpecifier(importee) && ignoreExternal) continue;
+        if (exclude.some(cb => cb(/** @type {string} */ (importee)))) continue;
+
         /**
          * [PLUGINS] - handleImport
          */
