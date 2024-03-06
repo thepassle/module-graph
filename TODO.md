@@ -13,6 +13,23 @@ Maybe something like:
 }
 ```
 
+## `findAll`
+
+Add `findAll` method
+
+```js
+// Gets passed `Module`
+moduleGraph.findAll(({packageRoot, path, pathname, importedBy}) => {
+  if (!!packageRoot) {
+    return true;
+  }
+
+  if(importedBy.length > 5) {
+    return true;
+  }
+});
+```
+
 ## `externalOnly`
 
 foo -> bar -> baz

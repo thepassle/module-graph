@@ -3,14 +3,16 @@ import { pathToFileURL } from 'url';
 
 /**
  * @typedef {import('../types.js').Plugin} Plugin
+ * @typedef {import('@rollup/plugin-typescript').RollupTypescriptOptions} RollupTypescriptOptions
  */
 
 /**
+ * @param {RollupTypescriptOptions} options
  * @returns {Plugin}
  */
-export function typescript() {
+export function typescript(options = {}) {
   // @ts-expect-error
-  const ts = t();
+  const ts = t(options);
 
   return {
     name: 'typescript',
