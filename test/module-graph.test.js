@@ -344,8 +344,10 @@ describe.only("createModuleGraph", () => {
 
               for (const _export of module.collectedExports) {
                 let isImported = false;
-                for (const modules of moduleGraph.modules.values()) {
-                  const foundExport = modules.collectedImports.find(i => i.name === _export.name && i.module === _export.declaration.module)
+
+                for (const modulePath of module.importedBy) {
+                  const m = moduleGraph.get(modulePath);
+                  const foundExport = m.collectedImports.find(i => i.name === _export.name && i.module === _export.declaration.module)
                   isImported = foundExport || isImported;
                 }
 
