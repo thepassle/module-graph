@@ -1,5 +1,4 @@
 import { ModuleGraph } from './ModuleGraph.js';
-import type { ImportSpecifier, ExportSpecifier } from 'es-module-lexer';
 import type { RollupNodeResolveOptions } from '@rollup/plugin-node-resolve';
 
 export interface Module {
@@ -8,8 +7,6 @@ export interface Module {
   path: string,
   source: string,
   packageRoot?: URL,
-  imports: readonly ImportSpecifier[],
-  exports: readonly ExportSpecifier[],
   facade: boolean,
   hasModuleSyntax: boolean,
   importedBy: string[],

@@ -30,15 +30,6 @@ moduleGraph.findAll(({packageRoot, path, pathname, importedBy}) => {
 });
 ```
 
-## CEM
-
-Can I not just apply CEM/A as a plugin?
-
-## Plugins for extra module information
-
-- imports/exports (like the plugin kris and I paired on)
-- barrelfiles
-
 ## `externalOnly`
 
 foo -> bar -> baz

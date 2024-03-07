@@ -77,6 +77,8 @@ const moduleGraph = await createModuleGraph('./index.ts', {
 const moduleGraph = await createModuleGraph('./index.js');
 
 const foo = moduleGraph.get('foo.js');
+/** Or use picomatch pattern */
+const bar = moduleGraph.get('**/bar.js');
 
 /**
  * Or:
