@@ -134,8 +134,6 @@ describe('createModuleGraph', () => {
       basePath: fixture('typescript-node'),
       plugins: [typescript({
         compilerOptions: {
-          target: "esnext",
-          module: "esnext",
           moduleResolution: "node",
         }
       })]
@@ -399,8 +397,9 @@ describe('plugins', () => {
     const moduleGraph = await createModuleGraph('./index.js', { 
       basePath: fixture('exclude'),
       exclude: [
-        (importee) => importee.endsWith('ignore-me.js'),
-        (importee) => importee.endsWith('ignore.js'),
+        'ignore.js',
+        '**/ignore-me.js',
+        '**/quux/*.js',
       ]
     });
 
