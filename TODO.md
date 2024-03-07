@@ -60,3 +60,5 @@ const moduleGraph = await createModuleGraph("./index.js", {
 moduleGraph.get('index.js').imports;
 moduleGraph.get('index.js').exports;
 ```
+
+- remove es-module-lexer `imports` and `exports` from Module, they're not very useful
