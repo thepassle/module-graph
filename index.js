@@ -1,11 +1,14 @@
 import fs from "fs";
 import path from "path";
-import { pathToFileURL, fileURLToPath, resolve as urlResolve } from "url";
+import { pathToFileURL, fileURLToPath } from "url";
 import { builtinModules } from "module";
 import { init, parse } from "es-module-lexer";
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { ModuleGraph } from "./ModuleGraph.js";
 import { isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
+import * as pm from 'picomatch';
+
+const picomatch = pm.default;
 
 /**
  * @typedef {import('./types.js').Module} Module
@@ -19,7 +22,7 @@ import { isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
  *  plugins?: Plugin[],
  *  basePath?: string,
  *  ignoreExternal?: boolean,
- *  exclude?: Array<(p: string) => boolean>,
+ *  exclude?: string[],
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
@@ -29,9 +32,10 @@ export async function createModuleGraph(entrypoints, options = {}) {
     basePath = process.cwd(), 
     exportConditions = ["node", "import"],
     ignoreExternal = false,
-    exclude = [],
+    exclude: excludePatterns = [],
     ...resolveOptions 
   } = options;
+  const exclude = excludePatterns.map(p => picomatch(p));
 
   // const packageCache = {
   //   "node_modules/foo": "1.0.0",
@@ -121,7 +125,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
         if (isBareModuleSpecifier(importee) && ignoreExternal) continue;
-        if (exclude.some(cb => cb(/** @type {string} */ (importee)))) continue;
 
         /**
          * [PLUGINS] - handleImport
@@ -188,6 +191,15 @@ export async function createModuleGraph(entrypoints, options = {}) {
           resolvedURL = /** @type {URL} */ (await resolve(importee, importer));
         }
         const pathToDependency = path.relative(basePath, fileURLToPath(resolvedURL));
+
+        /**
+         * Handle excludes, we do this here, because we want the resolved file paths, like
+         * `node_modules/foo/index.js` to be excluded, not the importee, which would just be `foo`
+         */
+        if (exclude.some(match => match(/** @type {string} */ (toUnix(pathToDependency))))) {
+          continue;
+        }      
+
         /** 
          * Get the packageRoot of the external dependency, which is useful for getting
          * to the package.json, for example. You can't always `require.resolve` it, 

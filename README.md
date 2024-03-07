@@ -30,12 +30,18 @@ const moduleGraph = await createModuleGraph('./index.js', {
   exportConditions: ['browser', 'import'],
   /** Ignores external modules */
   ignoreExternal: true,
+  /** Picomatch glob pattern */
   exclude: [
-    (importee) => importee.endsWith('ignore.js')
+    '**/ignore.js',
+    '**/foo/*.js',
   ],
   plugins: [myPlugin]
 });
 ```
+
+`createModuleGraph` analyzes only ESM-style imports, not `require`. However, if a CommonJS file is found and uses a dynamic import, it will include the dynamic import in the graph and any other imports that leads to.
+
+## Typescript
 
 If you want to analyze typescript source code, you can use the `typescript` plugin:
 
@@ -48,7 +54,20 @@ const moduleGraph = await createModuleGraph('./index.ts', {
 });
 ```
 
-`createModuleGraph` analyzes only ESM-style imports, not `require`. However, if a CommonJS file is found and uses a dynamic import, it will include the dynamic import in the graph and any other imports that leads to.
+The default is set to ESM, which means it expects `.js` file extensions in your code. However, you can also provide your `tsconfig.json` options to the typescript plugin, to resolve extensionless typescript imports, e.g.: `import { Foo } from './foo';`:
+
+```js
+import { createModuleGraph } from '@thepassle/module-graph';
+import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
+
+const moduleGraph = await createModuleGraph('./index.ts', {
+  plugins: [typescript({
+    compilerOptions: {
+      moduleResolution: "node",
+    }
+  })]
+});
+```
 
 ## `ModuleGraph`
 

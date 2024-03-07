@@ -1,6 +1,6 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Creates a module graph based on a given entrypoint.",
   "scripts": {
     "start": "node --watch index.js",
@@ -42,12 +42,14 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^20.11.24",
+    "@types/picomatch": "^2.3.3",
     "import-meta-resolve": "^4.0.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
-    "es-module-lexer": "^1.4.1"
+    "es-module-lexer": "^1.4.1",
+    "picomatch": "^4.0.1"
   }
 }
