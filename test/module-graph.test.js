@@ -112,13 +112,36 @@ describe('createModuleGraph', () => {
   });
 
   it('typescript', async () => {
-    const moduleGraph = await createModuleGraph('./index.ts', { 
+    /**
+     * index.ts -> foo.ts -> node_modules/bar/index.js
+     * import { foo } from './foo.js';
+     */
+    const moduleGraph = await createModuleGraph('./index.ts', {
       basePath: fixture('typescript'),
       plugins: [typescript()]
     });
 
     assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
     assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
+  });
+
+  it('typescript node', async () => {
+    /**
+     * index.ts -> foo.ts
+     * import { foo } from './foo';
+     */
+    const moduleGraph = await createModuleGraph('./index.ts', {
+      basePath: fixture('typescript-node'),
+      plugins: [typescript({
+        compilerOptions: {
+          target: "esnext",
+          module: "esnext",
+          moduleResolution: "node",
+        }
+      })]
+    });
+
+    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
   });
   
   it('require-in-chain', async () => {
