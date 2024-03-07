@@ -1,5 +1,8 @@
 import path from "path";
 import { toUnix } from "./utils.js";
+import * as pm from 'picomatch';
+
+const picomatch = pm.default;
 
 /**
  * @typedef {import('./types.js').Module} Module
@@ -30,20 +33,20 @@ export class ModuleGraph {
   }
 
   /**
-   * 
-   * @param {string | ((path: string) => boolean)} targetModule} targetModule 
-   * @returns {Module | undefined}
+   * @param {string | ((path: string) => boolean)} targetModule 
+   * @returns {Array<Module>}
    */
-  get (targetModule) {
-    if (typeof targetModule === "function") {
-      for (const [module, value] of this.modules.entries()) {
-        if (targetModule(module)) {
-          return value;
-        }
+  get(targetModule) {
+    const match = typeof targetModule === 'function' ? targetModule : picomatch(targetModule);
+    const result = [];
+
+    for (const [module, value] of this.modules.entries()) {
+      if (match(module)) {
+        result.push(value);
       }
-    } else {
-      return this.modules.get(targetModule);
     }
+
+    return result;
   }
 
   /**

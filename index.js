@@ -105,8 +105,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
       pathname: pathToFileURL(module).pathname,
       path: module,
       source: '',
-      imports: [],
-      exports: [],
       facade: false,
       hasModuleSyntax: true,
       importedBy: []
@@ -121,7 +119,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       importsToScan.delete(dep);
       const source = fs.readFileSync(path.join(basePath, dep)).toString();
 
-      const [imports, exports, facade, hasModuleSyntax] = parse(source);
+      const [imports, _, facade, hasModuleSyntax] = parse(source);
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
         if (isBareModuleSpecifier(importee) && ignoreExternal) continue;
@@ -232,8 +230,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
           pathname: resolvedURL.pathname,
           path: pathToDependency,
           importedBy: [],
-          imports: [],
-          exports: [],
           facade: false,
           hasModuleSyntax: true,
           source: '',
@@ -259,13 +255,10 @@ export async function createModuleGraph(entrypoints, options = {}) {
       };
 
       /**
-       * Add `source` code to the Module, and apply the `analyze` function
-       * from the options, if it's provided.
+       * Add `source` code to the Module
        */
       const currentModule = /** @type {Module} */ (moduleGraph.modules.get(toUnix(dep)));
       currentModule.source = source;
-      currentModule.exports = exports;
-      currentModule.imports = imports;
       currentModule.facade = facade;
       currentModule.hasModuleSyntax = hasModuleSyntax;
 

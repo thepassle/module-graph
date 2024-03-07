@@ -170,7 +170,8 @@ describe('createModuleGraph', () => {
     assert.deepStrictEqual(chains[0], ['a.js', 'b.js', 'c.js']);
     assert.deepStrictEqual(chains[1], ['a.js', 'd.js', 'c.js']);
 
-    assert.deepStrictEqual(moduleGraph.get('c.js').importedBy, ['b.js', 'd.js']);
+    const [c] = moduleGraph.get('c.js');
+    assert.deepStrictEqual(c.importedBy, ['b.js', 'd.js']);
   });
 
   it('resolves-private', async () => {
@@ -199,7 +200,7 @@ describe('createModuleGraph', () => {
      * 'foo'
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies') });
-    const m = moduleGraph.get('node_modules/foo/index.js');
+    const [m] = moduleGraph.get('node_modules/foo/index.js');
     
     assert(m.packageRoot.pathname.endsWith('test/fixtures/external-dependencies/node_modules/foo'));
   });
@@ -222,7 +223,7 @@ describe('createModuleGraph', () => {
      * 'foo'
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies-scoped-package') });
-    const m = moduleGraph.get('node_modules/@foo/bar/index.js');
+    const [m] = moduleGraph.get('node_modules/@foo/bar/index.js');
     
     assert(m.packageRoot.pathname.endsWith('test/fixtures/external-dependencies-scoped-package/node_modules/@foo/bar'));
   });
@@ -232,14 +233,14 @@ describe('createModuleGraph', () => {
      * 'foo' with package exports ".": "./foo.js"
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-package-exports-regular') });
-    const m = moduleGraph.get('node_modules/foo/foo.js');
+    const [m] = moduleGraph.get('node_modules/foo/foo.js');
 
     assert(m.packageRoot.pathname.endsWith('test/fixtures/external-package-exports-regular/node_modules/foo'));
   });
 
   it('monorepo', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('monorepo/packages/foo') });
-    const m = moduleGraph.get('../../node_modules/bar/index.js');
+    const [m] = moduleGraph.get('../../node_modules/bar/index.js');
     assert(m.packageRoot.pathname.endsWith('monorepo/node_modules/bar'));
   });
 });
@@ -390,7 +391,8 @@ describe('plugins', () => {
       plugins: [analyzePlugin]
     });
 
-    assert(moduleGraph.get('bar.js').usesProcessEnv);
+    const [r] = moduleGraph.get('bar.js');
+    assert(r.usesProcessEnv);
   });
 
   it('exclude', async () => {
