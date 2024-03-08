@@ -112,57 +112,6 @@ describe('createModuleGraph', () => {
     assert.deepStrictEqual(chains[1], ['d.js', 'c.js']);
   });
 
-  it('typescript', async () => {
-    /**
-     * index.ts -> foo.ts -> node_modules/bar/index.js
-     * import { foo } from './foo.js';
-     */
-    const moduleGraph = await createModuleGraph('./index.ts', {
-      basePath: fixture('typescript'),
-      plugins: [typescript()]
-    });
-
-    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
-    assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
-  });
-
-  it('unused exports', async () => {
-    const moduleGraph = await createModuleGraph('./a.js', {
-      basePath: fixture('unused-exports'),
-      plugins: [unusedExports]
-    });
-
-    assert.equal(moduleGraph.unusedExports.length, 3);
-    assert.equal(moduleGraph.unusedExports[0].export.name, 'b1');
-    assert.equal(moduleGraph.unusedExports[0].export.declaration.name, 'b1');
-    assert.equal(moduleGraph.unusedExports[0].export.declaration.module, 'b.js');
-
-    assert.equal(moduleGraph.unusedExports[1].export.name, 'default');
-    assert.equal(moduleGraph.unusedExports[1].export.declaration.name, 'b2');
-    assert.equal(moduleGraph.unusedExports[1].export.declaration.module, 'b.js');
-
-    assert.equal(moduleGraph.unusedExports[2].export.name, 'default');
-    assert.equal(moduleGraph.unusedExports[2].export.declaration.name, 'c1');
-    assert.equal(moduleGraph.unusedExports[2].export.declaration.module, 'c.js');
-  });
-
-  it('typescript node', async () => {
-    /**
-     * index.ts -> foo.ts
-     * import { foo } from './foo';
-     */
-    const moduleGraph = await createModuleGraph('./index.ts', {
-      basePath: fixture('typescript-node'),
-      plugins: [typescript({
-        compilerOptions: {
-          moduleResolution: "node",
-        }
-      })]
-    });
-
-    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
-  });
-  
   it('require-in-chain', async () => {
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('require-in-chain') });
     // Does not include `bar.js` because it was `require`d
@@ -427,5 +376,58 @@ describe('plugins', () => {
     });
 
     assert.deepStrictEqual(moduleGraph.getUniqueModules(), ["index.js", "foo.js", "bar.js", "node_modules/qux/index.js"]);
+  });
+});
+
+describe('built-in plugins', () => {
+  it('unused exports', async () => {
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 3);
+    assert.equal(moduleGraph.unusedExports[0].export.name, 'b1');
+    assert.equal(moduleGraph.unusedExports[0].export.declaration.name, 'b1');
+    assert.equal(moduleGraph.unusedExports[0].export.declaration.module, 'b.js');
+
+    assert.equal(moduleGraph.unusedExports[1].export.name, 'default');
+    assert.equal(moduleGraph.unusedExports[1].export.declaration.name, 'b2');
+    assert.equal(moduleGraph.unusedExports[1].export.declaration.module, 'b.js');
+
+    assert.equal(moduleGraph.unusedExports[2].export.name, 'default');
+    assert.equal(moduleGraph.unusedExports[2].export.declaration.name, 'c1');
+    assert.equal(moduleGraph.unusedExports[2].export.declaration.module, 'c.js');
+  });
+
+  it('typescript', async () => {
+    /**
+     * index.ts -> foo.ts -> node_modules/bar/index.js
+     * import { foo } from './foo.js';
+     */
+    const moduleGraph = await createModuleGraph('./index.ts', {
+      basePath: fixture('typescript'),
+      plugins: [typescript()]
+    });
+
+    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
+    assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
+  });
+
+  it('typescript node', async () => {
+    /**
+     * index.ts -> foo.ts
+     * import { foo } from './foo';
+     */
+    const moduleGraph = await createModuleGraph('./index.ts', {
+      basePath: fixture('typescript-node'),
+      plugins: [typescript({
+        compilerOptions: {
+          moduleResolution: "node",
+        }
+      })]
+    });
+
+    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
   });
 });
