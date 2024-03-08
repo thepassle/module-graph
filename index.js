@@ -66,6 +66,9 @@ export async function createModuleGraph(entrypoints, options = {}) {
    */
   async function resolve(importee, importer, options = {}) {
     const resolved = await resolveFn(importee, importer, options);
+    if (!resolved) {
+      throw new Error(`Failed to resolve "${importee}" from "${importer}".`);
+    }
     return pathToFileURL(resolved.id);
   }
 
@@ -186,7 +189,12 @@ export async function createModuleGraph(entrypoints, options = {}) {
          * If no plugins resolved the URL, defer to default resolution
          */
         if (!resolvedURL) {
-          resolvedURL = /** @type {URL} */ (await resolve(importee, importer));
+          try {
+            resolvedURL = /** @type {URL} */ (await resolve(importee, importer));
+          } catch(e) {
+            console.error(`Failed to resolve "${importee}" from "${importer}".`);
+            continue;
+          }
         }
         const pathToDependency = path.relative(basePath, fileURLToPath(resolvedURL));
 

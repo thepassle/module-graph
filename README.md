@@ -69,6 +69,26 @@ const moduleGraph = await createModuleGraph('./index.ts', {
 });
 ```
 
+## CLI
+
+```bash
+# List all modules in the graph
+npx @thepassle/module-graph index.js
+npx @thepassle/module-graph foo.js,bar.js
+
+# Find import chains for a given module
+npx @thepassle/module-graph import-chain entrypoint.js module-to-find.js
+
+# Find specific module
+npx @thepassle/module-graph find entrypoint.js module-to-find.js
+```
+
+All CLI commands also allow the `--ts` option if your source code is in Typescript, and this can be combined with the `--node` flag if you're using extensionless imports in Typescript. E.g.:
+
+```bash
+npx @thepassle/module-graph find entrypoint.ts module-to-find.ts --ts --node
+```
+
 ## `ModuleGraph`
 
 ### `get`

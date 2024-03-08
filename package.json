@@ -2,6 +2,7 @@
   "name": "@thepassle/module-graph",
   "version": "0.6.0",
   "description": "Creates a module graph based on a given entrypoint.",
+  "bin": "./bin/index.js",
   "scripts": {
     "start": "node --watch index.js",
     "test": "node --test --experimental-test-coverage test/module-graph.test.js",
@@ -50,6 +51,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
     "@thepassle/module-utils": "^0.2.0",
+    "commander": "^12.0.0",
     "es-module-lexer": "^1.4.1",
     "picomatch": "^4.0.1"
   }
