@@ -138,6 +138,7 @@ You can also extend the default behavior by providing plugins. There are several
 - **Imports** outputs additional analysis of every modules imports on the `Module` object
 - **Exports** outputs additional analysis of every modules exports on the `Module` object
 - **Barrel-file** analyzes every module to see if it's a barrel file
+- **Unused-exports** finds unused exports in your module graph
 
 ```js
 import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
