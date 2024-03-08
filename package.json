@@ -1,6 +1,6 @@
 {
   "name": "@thepassle/module-graph",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Creates a module graph based on a given entrypoint.",
   "bin": "./bin/index.js",
   "scripts": {

@@ -144,12 +144,14 @@ import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
 import { imports } from '@thepassle/module-graph/plugins/imports.js';
 import { exports } from '@thepassle/module-graph/plugins/exports.js';
 import { barrelFile } from '@thepassle/module-graph/plugins/barrel-file.js';
+import { unusedExports } from '@thepassle/module-graph/plugins/unused-exports.js';
 
 const moduleGraph = await createModuleGraph('./index.js', {
   plugins: [
     typescript(),
     imports,
     exports,
+    unusedExports,
     barrelFile({
       amountOfExportsToConsiderModuleAsBarrel: 3
     })
