@@ -112,7 +112,40 @@ chains.forEach((c) => console.log(c.join(" -> ")));
 
 ## Plugins
 
-You can also extend the default behavior by providing `plugin`s.
+You can also extend the default behavior by providing plugins. There are several default, opt-in plugins available:
+
+- **Typescript** analyze TS source code. Takes a `compilerOptions` object.
+- **Imports** outputs additional analysis of every modules imports on the `Module` object
+- **Exports** outputs additional analysis of every modules exports on the `Module` object
+- **Barrel-file** analyzes every module to see if it's a barrel file
+
+```js
+import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
+import { imports } from '@thepassle/module-graph/plugins/imports.js';
+import { exports } from '@thepassle/module-graph/plugins/exports.js';
+import { barrelFile } from '@thepassle/module-graph/plugins/barrel-file.js';
+
+const moduleGraph = await createModuleGraph('./index.js', {
+  plugins: [
+    typescript(),
+    imports,
+    exports,
+    barrelFile({
+      amountOfExportsToConsiderModuleAsBarrel: 3
+    })
+  ]
+});
+
+const module = moduleGraph.get('index.js');
+
+module.imports; // Array of `Import`
+module.exports; // Array of `Export`
+module.isBarrelFile; // true
+```
+
+See the [documentation](https://github.com/thepassle/module-utils?tab=readme-ov-file#importsexports) for more information on the `Import` and `Export` objects.
+
+## Creating plugins
 
 ### Hooks
 
