@@ -1,7 +1,11 @@
 import { ModuleGraph } from './ModuleGraph.js';
 import type { RollupNodeResolveOptions } from '@rollup/plugin-node-resolve';
 
-export interface Module {
+interface UserProvided {
+  [key: string]: any;
+}
+
+export interface Module extends UserProvided {
   href: string,
   pathname: string,
   path: string,
