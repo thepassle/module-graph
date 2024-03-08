@@ -164,6 +164,7 @@ const module = moduleGraph.get('index.js');
 module.imports; // Array of `Import`
 module.exports; // Array of `Export`
 module.isBarrelFile; // true
+module.unusedExports; // Array of `Export`
 ```
 
 See the [documentation](https://github.com/thepassle/module-utils?tab=readme-ov-file#importsexports) for more information on the `Import` and `Export` objects.

@@ -1,0 +1,1 @@
+import b2 from './b.js';

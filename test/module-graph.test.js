@@ -6,6 +6,7 @@ import { moduleResolve } from 'import-meta-resolve';
 import { createModuleGraph } from '../index.js';
 import { isBareModuleSpecifier } from '../utils.js';
 import { typescript } from '../plugins/typescript.js';
+import { unusedExports } from '../plugins/unused-exports.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
 
@@ -123,6 +124,26 @@ describe('createModuleGraph', () => {
 
     assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
     assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
+  });
+
+  it('unused exports', async () => {
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 3);
+    assert.equal(moduleGraph.unusedExports[0].export.name, 'b1');
+    assert.equal(moduleGraph.unusedExports[0].export.declaration.name, 'b1');
+    assert.equal(moduleGraph.unusedExports[0].export.declaration.module, 'b.js');
+
+    assert.equal(moduleGraph.unusedExports[1].export.name, 'default');
+    assert.equal(moduleGraph.unusedExports[1].export.declaration.name, 'b2');
+    assert.equal(moduleGraph.unusedExports[1].export.declaration.module, 'b.js');
+
+    assert.equal(moduleGraph.unusedExports[2].export.name, 'default');
+    assert.equal(moduleGraph.unusedExports[2].export.declaration.name, 'c1');
+    assert.equal(moduleGraph.unusedExports[2].export.declaration.module, 'c.js');
   });
 
   it('typescript node', async () => {

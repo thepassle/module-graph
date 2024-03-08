@@ -18,12 +18,13 @@ export const unusedExports = {
     module.exports = _exports(module.source, module.path);
   },
   end(moduleGraph) {
+    const unusedExports = [];
     for (const module of moduleGraph.modules.values()) {
       for (const _export of module.exports) {
         let isImported = false;
 
         for (const modulePath of module.importedBy) {
-          const m = moduleGraph.get(modulePath);
+          const [m] = moduleGraph.get(modulePath);
           // @ts-ignore
           const foundExport = m.imports.find((i) => i.name === _export.name && getFilename(i.module) === getFilename(_export.declaration.module));
 
@@ -31,11 +32,12 @@ export const unusedExports = {
         }
 
         if (!isImported) {
-          console.log(
-            `"${_export.name}" from "${_export.declaration.module}" is not imported by anything`
-          );
+          unusedExports.push({export: _export, module: _export.declaration.module});
         }
       }
     }
+
+    // @ts-ignore
+    moduleGraph.unusedExports = unusedExports;
   },
 };
