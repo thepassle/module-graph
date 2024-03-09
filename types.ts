@@ -16,6 +16,9 @@ export interface Module extends UserProvided {
   importedBy: string[],
 }
 
+export type ExtendedModule<T> = Module & T;
+export type ExtendedModuleGraph<T> = ModuleGraph & T;
+
 export interface Plugin {
   name: string;
   /**

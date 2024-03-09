@@ -1,0 +1,1 @@
+import * as alias from './b.js';

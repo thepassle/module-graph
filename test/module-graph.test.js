@@ -28,7 +28,6 @@ describe('createModuleGraph', () => {
      * index.js -> bar.js -> baz.js
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('graph-simple') });
-
     assert(moduleGraph.graph.get('index.js').has('bar.js'));
     assert(moduleGraph.graph.get('bar.js').has('baz.js'));
 
@@ -387,17 +386,40 @@ describe('built-in plugins', () => {
     });
 
     assert.equal(moduleGraph.unusedExports.length, 3);
-    assert.equal(moduleGraph.unusedExports[0].export.name, 'b1');
-    assert.equal(moduleGraph.unusedExports[0].export.declaration.name, 'b1');
-    assert.equal(moduleGraph.unusedExports[0].export.declaration.module, 'b.js');
+    assert.equal(moduleGraph.unusedExports[0].name, 'b1');
+    assert.equal(moduleGraph.unusedExports[0].declaration.name, 'b1');
+    assert.equal(moduleGraph.unusedExports[0].declaration.module, 'b.js');
 
-    assert.equal(moduleGraph.unusedExports[1].export.name, 'default');
-    assert.equal(moduleGraph.unusedExports[1].export.declaration.name, 'b2');
-    assert.equal(moduleGraph.unusedExports[1].export.declaration.module, 'b.js');
+    assert.equal(moduleGraph.unusedExports[1].name, 'default');
+    assert.equal(moduleGraph.unusedExports[1].declaration.name, 'b2');
+    assert.equal(moduleGraph.unusedExports[1].declaration.module, 'b.js');
 
-    assert.equal(moduleGraph.unusedExports[2].export.name, 'default');
-    assert.equal(moduleGraph.unusedExports[2].export.declaration.name, 'c1');
-    assert.equal(moduleGraph.unusedExports[2].export.declaration.module, 'c.js');
+    assert.equal(moduleGraph.unusedExports[2].name, 'default');
+    assert.equal(moduleGraph.unusedExports[2].declaration.name, 'c1');
+    assert.equal(moduleGraph.unusedExports[2].declaration.module, 'c.js');
+  });
+
+  it('unused exports alias', async () => {
+    /**
+     * import { b as alias } from './b.js';
+     */
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports-alias'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 0);
+  });
+  it('unused exports aggregate', async () => {
+    /**
+     * import * as foo from './b.js'
+     */
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports-aggregate'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 0);
   });
 
   it('typescript', async () => {

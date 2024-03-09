@@ -9,6 +9,16 @@ function getFilename(path) {
 }
 
 /**
+ * @typedef {import('@thepassle/module-utils/exports.js').Export} Export
+ * @typedef {import('@thepassle/module-utils/imports.js').Import} Import
+ * @typedef {import('../types.js').ExtendedModule<{
+ *  imports: Import[],
+ *  exports: Export[]
+ * }>} ExtendedModule
+ * @typedef {import('../types.js').ExtendedModuleGraph<{unusedExports: Export[]}>} ExtendedModuleGraph
+ */
+
+/**
  * @type {import('../types.js').Plugin}
  */
 export const unusedExports = {
@@ -18,26 +28,27 @@ export const unusedExports = {
     module.exports = _exports(module.source, module.path);
   },
   end(moduleGraph) {
+    /** @type {Export[]} */
     const unusedExports = [];
     for (const module of moduleGraph.modules.values()) {
-      for (const _export of module.exports) {
+      for (const _export of /** @type {ExtendedModule} */ (module).exports) {
         let isImported = false;
 
         for (const modulePath of module.importedBy) {
-          const [m] = moduleGraph.get(modulePath);
-          // @ts-ignore
-          const foundExport = m.imports.find((i) => i.name === _export.name && getFilename(i.module) === getFilename(_export.declaration.module));
+          const [m] = /** @type {ExtendedModule[]} */ (moduleGraph.get(modulePath));
+          const foundExport = m.imports.find((i) => 
+            i.declaration === '*' || (i.declaration === _export.name && getFilename(i.module) === getFilename(/** @type {string} */ (_export.declaration?.module ?? _export.declaration.package)))
+          );
 
           isImported = !!foundExport || isImported;
         }
 
         if (!isImported) {
-          unusedExports.push({export: _export, module: _export.declaration.module});
+          unusedExports.push(_export);
         }
       }
     }
 
-    // @ts-ignore
-    moduleGraph.unusedExports = unusedExports;
+    /** @type {ExtendedModuleGraph} */ (moduleGraph).unusedExports = unusedExports;
   },
 };
