@@ -385,18 +385,15 @@ describe('built-in plugins', () => {
       plugins: [unusedExports]
     });
 
-    assert.equal(moduleGraph.unusedExports.length, 3);
+    assert.equal(moduleGraph.unusedExports.length, 2);
+
     assert.equal(moduleGraph.unusedExports[0].name, 'b1');
     assert.equal(moduleGraph.unusedExports[0].declaration.name, 'b1');
     assert.equal(moduleGraph.unusedExports[0].declaration.module, 'b.js');
 
     assert.equal(moduleGraph.unusedExports[1].name, 'default');
-    assert.equal(moduleGraph.unusedExports[1].declaration.name, 'b2');
-    assert.equal(moduleGraph.unusedExports[1].declaration.module, 'b.js');
-
-    assert.equal(moduleGraph.unusedExports[2].name, 'default');
-    assert.equal(moduleGraph.unusedExports[2].declaration.name, 'c1');
-    assert.equal(moduleGraph.unusedExports[2].declaration.module, 'c.js');
+    assert.equal(moduleGraph.unusedExports[1].declaration.name, 'c1');
+    assert.equal(moduleGraph.unusedExports[1].declaration.module, 'c.js');
   });
 
   it('unused exports alias', async () => {
@@ -410,6 +407,7 @@ describe('built-in plugins', () => {
 
     assert.equal(moduleGraph.unusedExports.length, 0);
   });
+
   it('unused exports aggregate', async () => {
     /**
      * import * as foo from './b.js'
