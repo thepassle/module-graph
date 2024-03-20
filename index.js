@@ -73,10 +73,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
   }
 
   const processedEntrypoints = (typeof entrypoints === "string" ? [entrypoints] : entrypoints);
-  const modules = await Promise.all(processedEntrypoints.map(async e => {
-    const resolved = /** @type {URL} */ (await resolve(e, path.join(basePath, e)));
-    return path.relative(basePath, fileURLToPath(resolved));
-  }));
+  const modules = processedEntrypoints.map(e => path.relative(basePath, path.join(basePath, e)));
 
   /**
    * [PLUGINS] - start

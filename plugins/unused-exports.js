@@ -36,9 +36,13 @@ export const unusedExports = {
 
         for (const modulePath of module.importedBy) {
           const [m] = /** @type {ExtendedModule[]} */ (moduleGraph.get(modulePath));
-          const foundExport = m.imports.find((i) => 
-            i.declaration === '*' || (i.declaration === _export.name && getFilename(i.module) === getFilename(/** @type {string} */ (_export.declaration?.module ?? _export.declaration.package)))
-          );
+          const foundExport = m.imports.find((i) => {
+            if (i.kind === 'default' && _export.name === 'default' && getFilename(i.module) === getFilename(/** @type {string} */ (_export.declaration?.module ?? _export.declaration.package))) {
+              return true;
+            }
+
+            return i.declaration === '*' || (i.declaration === _export.name && getFilename(i.module) === getFilename(/** @type {string} */ (_export.declaration?.module ?? _export.declaration.package)))
+          });
 
           isImported = !!foundExport || isImported;
         }
