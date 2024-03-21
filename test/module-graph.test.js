@@ -420,6 +420,43 @@ describe('built-in plugins', () => {
     assert.equal(moduleGraph.unusedExports.length, 0);
   });
 
+  it('unused exports reexport named', async () => {
+    /**
+     * export { b } from './b.js'
+     * export { c as alias } from './c.js'
+     */
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports-reexport-named'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 0);
+  });
+
+  it('unused exports reexport default', async () => {
+    /**
+     * export { default } from './b.js'
+     */
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports-reexport-default'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 0);
+  });
+
+  it('unused exports reexport default', async () => {
+    /**
+     * export * from './b.js'
+     */
+    const moduleGraph = await createModuleGraph('./a.js', {
+      basePath: fixture('unused-exports-reexport-aggregate'),
+      plugins: [unusedExports]
+    });
+
+    assert.equal(moduleGraph.unusedExports.length, 0);
+  });
+
   it('typescript', async () => {
     /**
      * index.ts -> foo.ts -> node_modules/bar/index.js
