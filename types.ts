@@ -6,14 +6,24 @@ interface UserProvided {
 }
 
 export interface Module extends UserProvided {
+  /** File URL */
   href: string,
+  /** Absolute path */
   pathname: string,
+  /** Relative path from the cwd */
   path: string,
   source: string,
   packageRoot?: URL,
   facade: boolean,
   hasModuleSyntax: boolean,
   importedBy: string[],
+}
+
+export interface ExternalModule extends Module {
+  /** The name of the external package, e.g. "foo" */
+  package: string,
+  /** The import thats used in the source code, e.g. "foo/bar.js" */
+  importSpecifier: string,
 }
 
 export type ExtendedModule<T> = Module & T;

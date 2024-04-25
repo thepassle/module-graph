@@ -170,7 +170,6 @@ describe('createModuleGraph', () => {
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('external-dependencies') });
     const [m] = moduleGraph.get('node_modules/foo/index.js');
-    
     assert(m.packageRoot.pathname.endsWith('test/fixtures/external-dependencies/node_modules/foo'));
   });
 
@@ -184,7 +183,7 @@ describe('createModuleGraph', () => {
     });
 
     assert.equal(moduleGraph.modules.size, 2);
-    assert.equal(moduleGraph.externalDependencies.size, 0);
+    assert.equal(moduleGraph.externalModules.size, 0);
   });
 
   it('external-dependencies-scoped-package', async () => {

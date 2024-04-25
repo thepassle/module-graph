@@ -6,6 +6,7 @@ const picomatch = pm.default;
 
 /**
  * @typedef {import('./types.js').Module} Module
+ * @typedef {import('./types.js').ExternalModule} ExternalModule
  */
 
 export class ModuleGraph {
@@ -21,11 +22,9 @@ export class ModuleGraph {
     this.entrypoints = (typeof entrypoints === 'string' ? [entrypoints] : entrypoints).map(e => path.posix.normalize(e));
     this.basePath = basePath;
     /**
-     * @TODO This doesn't take into account nested dependencies
-     * we may need to read the package.json (based on the `packageRoot`) for the version of a dependency
-     * and then store multiple versions given a bare module specifier -> need to think of a good data structure for this
+     * @type {Map<string, ExternalModule>}
      */
-    this.externalDependencies = new Set();
+    this.externalModules = new Map();
     /**
      * @type {Map<string, Module>}
      */
