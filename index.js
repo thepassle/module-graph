@@ -5,7 +5,7 @@ import { builtinModules } from "module";
 import { init, parse } from "es-module-lexer";
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { ModuleGraph } from "./ModuleGraph.js";
-import { isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
+import { extractPackageNameFromSpecifier, isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
 import * as pm from 'picomatch';
 
 const picomatch = pm.default;
@@ -21,8 +21,12 @@ const picomatch = pm.default;
  * @param {RollupNodeResolveOptions & {
  *  plugins?: Plugin[],
  *  basePath?: string,
- *  ignoreExternal?: boolean,
- *  exclude?: string[],
+ *  external?: {
+ *   ignore?: boolean,
+ *   include?: string[],
+ *   exclude?: string[]
+ *  },
+ *  exclude?: Array<string | ((importee: string) => boolean)>,
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
@@ -31,11 +35,18 @@ export async function createModuleGraph(entrypoints, options = {}) {
     plugins = [], 
     basePath = process.cwd(), 
     exportConditions = ["node", "import"],
-    ignoreExternal = false,
+    external = {
+      ignore: false,
+      include: [],
+      exclude: [],
+    },
     exclude: excludePatterns = [],
     ...resolveOptions 
   } = options;
-  const exclude = excludePatterns.map(p => picomatch(p));
+  if (external.ignore && external.include?.length) {
+    throw new Error('Cannot use both "ignore" and "include" in the external option.');
+  }
+  const exclude = excludePatterns.map(p => typeof p === 'string' ? picomatch(p) : p);
 
   const r = nodeResolve({
     ...resolveOptions, 
@@ -110,7 +121,10 @@ export async function createModuleGraph(entrypoints, options = {}) {
       const [imports, _, facade, hasModuleSyntax] = parse(source);
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
-        if (isBareModuleSpecifier(importee) && ignoreExternal) continue;
+        if (isBareModuleSpecifier(importee) && external.ignore) continue;
+        if (isBareModuleSpecifier(importee) && external.exclude?.length && external.exclude?.includes(extractPackageNameFromSpecifier(importee))) continue;
+        if (isBareModuleSpecifier(importee) && external.include?.length && !external.include?.includes(extractPackageNameFromSpecifier(importee))) continue;
+
         /**
          * [PLUGINS] - handleImport
          */

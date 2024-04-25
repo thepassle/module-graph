@@ -4,7 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { moduleResolve } from 'import-meta-resolve';
 import { createModuleGraph } from '../index.js';
-import { isBareModuleSpecifier } from '../utils.js';
+import { isBareModuleSpecifier, extractPackageNameFromSpecifier } from '../utils.js';
 import { typescript } from '../plugins/typescript.js';
 import { unusedExports } from '../plugins/unused-exports.js';
 
@@ -18,6 +18,11 @@ describe('utils', () => {
     assert(!isBareModuleSpecifier('./foo'));
     assert(!isBareModuleSpecifier('../foo'));
     assert(!isBareModuleSpecifier('#private'));
+  });
+
+  it('extractPackageNameFromSpecifier', () => {
+    assert.equal(extractPackageNameFromSpecifier('foo/bar/baz.js'), 'foo');
+    assert.equal(extractPackageNameFromSpecifier('@foo/bar/baz.js'), '@foo/bar');
   });
 });
 
@@ -179,11 +184,58 @@ describe('createModuleGraph', () => {
      */
     const moduleGraph = await createModuleGraph('./a.js', { 
       basePath: fixture('ignore-external'),
-      ignoreExternal: true
+      external: {
+        ignore: true
+      }
     });
 
     assert.equal(moduleGraph.modules.size, 2);
     assert.equal(moduleGraph.externalModules.size, 0);
+  });
+
+  it('external-exclude', async () => {
+    /**
+     * a.js -> b.js -> foo, bar
+     */
+    const moduleGraph = await createModuleGraph('./a.js', { 
+      basePath: fixture('external-exclude'),
+      external: {
+        exclude: ['foo']
+      }
+    });
+
+    assert.equal(moduleGraph.modules.size, 3);
+    assert.equal(moduleGraph.externalModules.size, 1);
+  });
+
+  it('external-include', async () => {
+    /**
+     * a.js -> b.js -> foo, bar
+     */
+    const moduleGraph = await createModuleGraph('./a.js', { 
+      basePath: fixture('external-exclude'),
+      external: {
+        include: ['foo']
+      }
+    });
+    console.log(moduleGraph);
+    assert.equal(moduleGraph.modules.size, 3);
+    assert.equal(moduleGraph.externalModules.size, 1);
+  });
+
+  it('external ignore AND include throws error', async () => {
+    try {
+      await createModuleGraph('./a.js', { 
+        basePath: fixture('ignore-external'),
+        external: {
+          ignore: true,
+          include: ['foo']
+        }
+      });
+      assert(false);
+    } catch(e) {
+      assert.equal(e.message, "Cannot use both \"ignore\" and \"include\" in the external option.");
+    }
   });
 
   it('external-dependencies-scoped-package', async () => {

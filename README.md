@@ -28,12 +28,20 @@ const moduleGraph = await createModuleGraph(['./foo.js', './bar.js']);
 const moduleGraph = await createModuleGraph('./index.js', {
   basePath: process.cwd(),
   exportConditions: ['browser', 'import'],
-  /** Ignores external modules */
-  ignoreExternal: true,
-  /** Picomatch glob pattern */
+  /** Handle external modules */
+  external: {
+    /** Ignore all external modules imported via a bare module specifier */
+    ignore: true,
+    /** Only include external modules from these packages */
+    include: ['bar'],
+    /** Exclude bare module specifiers */
+    exclude: ['foo', '@foo/bar'],
+  },
+  /** Picomatch glob pattern or callback */
   exclude: [
     '**/ignore.js',
     '**/foo/*.js',
+    (importee) => importee.includes('foo')
   ],
   plugins: [myPlugin]
 });
