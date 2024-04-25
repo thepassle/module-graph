@@ -37,18 +37,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
   } = options;
   const exclude = excludePatterns.map(p => picomatch(p));
 
-  // const packageCache = {
-  //   "node_modules/foo": "1.0.0",
-  //   "node_modules/bar/node_modules/foo": "2.0.0",
-  // };
-  // construct:
-  // const externalDependencies = {
-  //   "foo": {
-  //     "1.0.0": "node_modules/foo",
-  //     "2.0.0": "node_modules/bar/node_modules/foo",
-  //   }
-  // }
-
   const r = nodeResolve({
     ...resolveOptions, 
     exportConditions,
@@ -123,7 +111,6 @@ export async function createModuleGraph(entrypoints, options = {}) {
       importLoop: for (let { n: importee } of imports) {
         if (!importee) continue;
         if (isBareModuleSpecifier(importee) && ignoreExternal) continue;
-
         /**
          * [PLUGINS] - handleImport
          */
@@ -148,16 +135,11 @@ export async function createModuleGraph(entrypoints, options = {}) {
         }
         /** Skip built-in modules like fs, path, etc */
         if (builtinModules.includes(importee.replace("node:", ""))) continue;
-        if (isBareModuleSpecifier(importee)) {
-          moduleGraph.externalDependencies.add(importee);
-        }
-
 
         /**
          * Resolve the module's location
          */
         const importer = path.join(basePath, dep);
-
         /**
          * [PLUGINS] - resolve
          */
@@ -209,6 +191,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
          * if it's not included in the packages package exports.
          */
         let packageRoot;
+        let pkg;
         if (pathToDependency.includes('node_modules')) {
           const resolvedPath = fileURLToPath(resolvedURL);
           const separator = 'node_modules' + path.sep;
@@ -221,10 +204,10 @@ export async function createModuleGraph(entrypoints, options = {}) {
            */
           if (isScopedPackage(importSpecifier)) {
             const split = importSpecifier.split(path.sep);
-            const pkg = [split[0], split[1]].join(path.sep);
+            pkg = [split[0], split[1]].join(path.sep);
             packageRoot = pathToFileURL(path.join(filePath, pkg));
           } else {
-            const pkg = importSpecifier.split(path.sep)[0];
+            pkg = importSpecifier.split(path.sep)[0];
             packageRoot = pathToFileURL(path.join(filePath, pkg));
           }
         }
@@ -239,6 +222,14 @@ export async function createModuleGraph(entrypoints, options = {}) {
           hasModuleSyntax: true,
           source: '',
           ...(packageRoot ? {packageRoot} : {}),
+        }
+
+        if (isBareModuleSpecifier(importee)) {
+          moduleGraph.externalModules.set(resolvedURL.pathname, {
+            ...module,
+            package: /** @type {string} */ (pkg),
+            importSpecifier: importee
+          });
         }
         
         if (!moduleGraph.graph.has(pathToDependency)) {
