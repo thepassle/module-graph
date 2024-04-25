@@ -258,6 +258,13 @@ export async function createModuleGraph(entrypoints, options = {}) {
       currentModule.facade = facade;
       currentModule.hasModuleSyntax = hasModuleSyntax;
 
+      const externalModule = moduleGraph.externalModules.get(currentModule.pathname);
+      if (externalModule) {
+        externalModule.source = source;
+        externalModule.facade = facade;
+        externalModule.hasModuleSyntax = hasModuleSyntax;
+      }
+
       /**
        * [PLUGINS] - analyze
        */
