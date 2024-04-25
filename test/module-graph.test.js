@@ -218,7 +218,6 @@ describe('createModuleGraph', () => {
         include: ['foo']
       }
     });
-    console.log(moduleGraph);
     assert.equal(moduleGraph.modules.size, 3);
     assert.equal(moduleGraph.externalModules.size, 1);
   });
