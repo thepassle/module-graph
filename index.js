@@ -26,6 +26,7 @@ const picomatch = pm.default;
  *   include?: string[],
  *   exclude?: string[]
  *  },
+ *  ignoreDynamicImport?: boolean,
  *  exclude?: Array<string | ((importee: string) => boolean)>,
  * }} options
  * @returns {Promise<ModuleGraph>}
@@ -35,6 +36,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
     plugins = [], 
     basePath = process.cwd(), 
     exportConditions = ["node", "import"],
+    ignoreDynamicImport = false,
     external = {
       ignore: false,
       include: [],
@@ -108,6 +110,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       hasModuleSyntax: true,
       importedBy: []
     });
+    moduleGraph.graph.set(module, new Set());
   }
 
   /** Init es-module-lexer wasm */
@@ -119,8 +122,10 @@ export async function createModuleGraph(entrypoints, options = {}) {
       const source = fs.readFileSync(path.join(basePath, dep)).toString();
 
       const [imports, _, facade, hasModuleSyntax] = parse(source);
-      importLoop: for (let { n: importee } of imports) {
+      importLoop: for (let { n: importee, ss: start, se: end } of imports) {
+        const importString = source.substring(start, end);
         if (!importee) continue;
+        if (ignoreDynamicImport && importString.startsWith('import(')) continue;
         if (isBareModuleSpecifier(importee) && external.ignore) continue;
         if (isBareModuleSpecifier(importee) && external.exclude?.length && external.exclude?.includes(extractPackageNameFromSpecifier(importee))) continue;
         if (isBareModuleSpecifier(importee) && external.include?.length && !external.include?.includes(extractPackageNameFromSpecifier(importee))) continue;
