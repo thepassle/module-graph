@@ -58,8 +58,16 @@ describe('createModuleGraph', () => {
      * index.js -> import('./foo.js')
      */
     const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('dynamic-import') });
-
     assert(moduleGraph.graph.get('index.js').has('foo.js'));
+  });
+
+  it('ignore-dynamic-import', async () => {
+    /**
+     * index.js -> import('./ignore-dynamic-import.js')
+     */
+    const moduleGraph = await createModuleGraph('./index.js', { ignoreDynamicImport: true, basePath: fixture('ignore-dynamic-import') });
+    assert(!moduleGraph.graph.get('index.js').has('ignore-dynamic-import.js'));
+    assert(moduleGraph.graph.get('index.js'));
   });
 
   it('dynamic-import-in-cjs', async () => {

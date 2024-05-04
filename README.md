@@ -43,6 +43,8 @@ const moduleGraph = await createModuleGraph('./index.js', {
     '**/foo/*.js',
     (importee) => importee.includes('foo')
   ],
+  /** Ignores dynamic imports */
+  ignoreDynamicImport: true,
   plugins: [myPlugin]
 });
 ```
