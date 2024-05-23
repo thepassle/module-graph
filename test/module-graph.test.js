@@ -96,7 +96,6 @@ describe('createModuleGraph', () => {
      * d.js -> c.js
      */
     const moduleGraph = await createModuleGraph(['./a.js', './d.js'], { basePath: fixture('multiple-entrypoints-import-chains') });
-    
     const chains = moduleGraph.findImportChains((p) => p.endsWith('c.js'));
     assert.deepStrictEqual(chains[0], ['a.js', 'b.js', 'c.js']);
     assert.deepStrictEqual(chains[1], ['d.js', 'c.js']);

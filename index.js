@@ -74,7 +74,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
   }
 
   const processedEntrypoints = (typeof entrypoints === "string" ? [entrypoints] : entrypoints);
-  const modules = processedEntrypoints.map(e => path.relative(basePath, path.join(basePath, e)));
+  const modules = processedEntrypoints.map(e => toUnix(path.relative(basePath, path.join(basePath, e))));
 
   /**
    * [PLUGINS] - start
@@ -110,6 +110,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       hasModuleSyntax: true,
       importedBy: []
     });
+
     moduleGraph.graph.set(module, new Set());
   }
 
@@ -194,13 +195,13 @@ export async function createModuleGraph(entrypoints, options = {}) {
             continue;
           }
         }
-        const pathToDependency = path.relative(basePath, fileURLToPath(resolvedURL));
+        const pathToDependency = toUnix(path.relative(basePath, fileURLToPath(resolvedURL)));
 
         /**
          * Handle excludes, we do this here, because we want the resolved file paths, like
          * `node_modules/foo/index.js` to be excluded, not the importee, which would just be `foo`
          */
-        if (exclude.some(match => match(/** @type {string} */ (toUnix(pathToDependency))))) {
+        if (exclude.some(match => match(/** @type {string} */ (pathToDependency)))) {
           continue;
         }      
 
@@ -256,13 +257,13 @@ export async function createModuleGraph(entrypoints, options = {}) {
         }
 
         if (!moduleGraph.modules.has(pathToDependency)) {
-          moduleGraph.modules.set(toUnix(pathToDependency), module);
+          moduleGraph.modules.set(pathToDependency, module);
         }
         if (!moduleGraph.graph.has(dep)) {
-          moduleGraph.graph.set(toUnix(dep), new Set());
+          moduleGraph.graph.set(dep, new Set());
         }
-        /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(toUnix(pathToDependency));
-
+        /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(pathToDependency);
+        
         const importedModule = moduleGraph.modules.get(pathToDependency);
         if (importedModule && !importedModule.importedBy.includes(dep)) {
           importedModule.importedBy.push(dep);
@@ -272,7 +273,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       /**
        * Add `source` code to the Module
        */
-      const currentModule = /** @type {Module} */ (moduleGraph.modules.get(toUnix(dep)));
+      const currentModule = /** @type {Module} */ (moduleGraph.modules.get(dep));
       currentModule.source = source;
       currentModule.facade = facade;
       currentModule.hasModuleSyntax = hasModuleSyntax;
