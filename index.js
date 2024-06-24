@@ -172,7 +172,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
          */
         if (!resolvedURL) {
           try {
-            const resolved = /** @type {{path: string}} */ (await resolve.sync(path.dirname(importer), importee));
+            const resolved = /** @type {{path: string}} */ (await resolve.async(path.dirname(importer), importee));
             resolvedURL = pathToFileURL(resolved.path);
           } catch(e) {
             console.error(`Failed to resolve "${importee}" from "${importer}".`);

@@ -52,7 +52,7 @@
     "@thepassle/module-utils": "^0.2.0",
     "commander": "^12.0.0",
     "es-module-lexer": "^1.4.1",
-    "oxc-resolver": "^1.8.1",
+    "oxc-resolver": "^1.8.2",
     "picomatch": "^4.0.1"
   }
 }
