@@ -1,5 +1,5 @@
 import { ModuleGraph } from './ModuleGraph.js';
-import type { RollupNodeResolveOptions } from '@rollup/plugin-node-resolve';
+import type { NapiResolveOptions } from 'oxc-resolver';
 
 interface UserProvided {
   [key: string]: any;
@@ -68,7 +68,7 @@ export interface Plugin {
     importee: string,
     importer: string,
     exportConditions: string[],
-  } & RollupNodeResolveOptions) => URL | void | Promise<void | URL>;
+  } & NapiResolveOptions) => URL | void | Promise<void | URL>;
   /**
    * Runs once
    * Use for cleanup logic of the plugin

@@ -3,7 +3,7 @@ import path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
 import { builtinModules } from "module";
 import { init, parse } from "es-module-lexer";
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { ResolverFactory } from 'oxc-resolver';
 import { ModuleGraph } from "./ModuleGraph.js";
 import { extractPackageNameFromSpecifier, isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
 import * as pm from 'picomatch';
@@ -13,12 +13,12 @@ const picomatch = pm.default;
 /**
  * @typedef {import('./types.js').Module} Module
  * @typedef {import('./types.js').Plugin} Plugin
- * @typedef {import('@rollup/plugin-node-resolve').RollupNodeResolveOptions} RollupNodeResolveOptions
+ * @typedef {import('oxc-resolver').NapiResolveOptions} NapiResolveOptions
  */
 
 /**
  * @param {string | string[]} entrypoints
- * @param {RollupNodeResolveOptions & {
+ * @param {NapiResolveOptions & {
  *  plugins?: Plugin[],
  *  basePath?: string,
  *  external?: {
@@ -26,6 +26,7 @@ const picomatch = pm.default;
  *   include?: string[],
  *   exclude?: string[]
  *  },
+ *  exportConditions?: NapiResolveOptions["conditionNames"],
  *  ignoreDynamicImport?: boolean,
  *  exclude?: Array<string | ((importee: string) => boolean)>,
  * }} options
@@ -50,28 +51,10 @@ export async function createModuleGraph(entrypoints, options = {}) {
   }
   const exclude = excludePatterns.map(p => typeof p === 'string' ? picomatch(p) : p);
 
-  const r = nodeResolve({
-    ...resolveOptions, 
-    exportConditions,
-    rootDir: basePath,
+  const resolve = new ResolverFactory({
+    ...resolveOptions,
+    conditionNames: exportConditions,
   });
-
-  // @ts-ignore
-  const resolveFn = r.resolveId.handler.bind({resolve: () => null});
-
-  /**
-   * @param {string} importee 
-   * @param {string} importer 
-   * @param {Object} options 
-   * @returns {Promise<URL | undefined>}
-   */
-  async function resolve(importee, importer, options = {}) {
-    const resolved = await resolveFn(importee, importer, options);
-    if (!resolved) {
-      throw new Error(`Failed to resolve "${importee}" from "${importer}".`);
-    }
-    return pathToFileURL(resolved.id);
-  }
 
   const processedEntrypoints = (typeof entrypoints === "string" ? [entrypoints] : entrypoints);
   const modules = processedEntrypoints.map(e => toUnix(path.relative(basePath, path.join(basePath, e))));
@@ -189,7 +172,8 @@ export async function createModuleGraph(entrypoints, options = {}) {
          */
         if (!resolvedURL) {
           try {
-            resolvedURL = /** @type {URL} */ (await resolve(importee, importer));
+            const resolved = /** @type {{path: string}} */ (await resolve.async(path.dirname(importer), importee));
+            resolvedURL = pathToFileURL(resolved.path);
           } catch(e) {
             console.error(`Failed to resolve "${importee}" from "${importer}".`);
             continue;
