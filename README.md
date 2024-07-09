@@ -1,6 +1,6 @@
 # Module graph
 
-Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, typescript (via a plugin) and is extensible via plugins. Builds on top of [`es-module-lexer`](https://www.npmjs.com/package/es-module-lexer) for scanning a module's imports, and [`@rollup/plugin-node-resolve`](https://www.npmjs.com/package/@rollup/plugin-node-resolve) for module resolution (without using `Rollup` directly).
+Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, typescript (via a plugin) and is extensible via plugins. Builds on top of [`es-module-lexer`](https://www.npmjs.com/package/es-module-lexer) for scanning a module's imports, and [`oxc-resolver`](https://www.npmjs.com/package/oxc-resolver) for module resolution.
 
 ## Installation
 
@@ -22,8 +22,8 @@ const moduleGraph = await createModuleGraph(['./foo.js', './bar.js']);
 
 /**
  * Configuration options
- * Supports all `@rollup/plugin-node-resolve`'s `RollupNodeResolveOptions` options.
- * https://www.npmjs.com/package/@rollup/plugin-node-resolve#options
+ * Supports all `oxc-resolver`'s `NapiResolveOptions` options.
+ * https://github.com/oxc-project/oxc-resolver?tab=readme-ov-file#oxc-resolver
  */
 const moduleGraph = await createModuleGraph('./index.js', {
   basePath: process.cwd(),
