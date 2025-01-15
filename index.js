@@ -2,12 +2,13 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
 import { builtinModules } from "module";
-import { init, parse } from "es-module-lexer";
+import rsModuleLexer from 'rs-module-lexer';
 import { ResolverFactory } from 'oxc-resolver';
 import { ModuleGraph } from "./ModuleGraph.js";
 import { extractPackageNameFromSpecifier, isBareModuleSpecifier, isScopedPackage, toUnix } from "./utils.js";
 import * as pm from 'picomatch';
 
+const { parseAsync } = rsModuleLexer;
 const picomatch = pm.default;
 
 /**
@@ -97,15 +98,14 @@ export async function createModuleGraph(entrypoints, options = {}) {
     moduleGraph.graph.set(module, new Set());
   }
 
-  /** Init es-module-lexer wasm */
-  await init;
-
   while (importsToScan.size) {
     for (const dep of importsToScan) {
       importsToScan.delete(dep);
-      const source = fs.readFileSync(path.join(basePath, dep)).toString();
+      const filename = path.join(basePath, dep);
+      const source = fs.readFileSync(filename).toString();
 
-      const [imports, _, facade, hasModuleSyntax] = parse(source);
+      const { output } = await parseAsync({ input: [{ filename, code: source }] })
+      const { imports, facade, hasModuleSyntax } = output[0];
       importLoop: for (let { n: importee, ss: start, se: end } of imports) {
         const importString = source.substring(start, end);
         if (!importee) continue;

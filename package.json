@@ -53,6 +53,7 @@
     "commander": "^12.0.0",
     "es-module-lexer": "^1.4.1",
     "oxc-resolver": "^1.9.3",
-    "picomatch": "^4.0.1"
+    "picomatch": "^4.0.1",
+    "rs-module-lexer": "^2.5.1"
   }
 }

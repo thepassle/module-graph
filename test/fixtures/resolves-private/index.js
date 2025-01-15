@@ -1,1 +1,1 @@
-import { private } from '#private';
+import { privateVar } from '#private';
