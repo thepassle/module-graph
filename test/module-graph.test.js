@@ -5,7 +5,6 @@ import { pathToFileURL } from 'node:url';
 import { moduleResolve } from 'import-meta-resolve';
 import { createModuleGraph } from '../index.js';
 import { isBareModuleSpecifier, extractPackageNameFromSpecifier } from '../utils.js';
-import { typescript } from '../plugins/typescript.js';
 import { unusedExports } from '../plugins/unused-exports.js';
 
 const fixture = (p) => path.join(process.cwd(), 'test/fixtures', p);
@@ -130,10 +129,29 @@ describe('createModuleGraph', () => {
   });
 
   it('import-attributes', async () => {
-    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('import-attributes') });
+    await assert.rejects(
+      async () => {
+        await createModuleGraph("./index.ts", {
+          basePath: fixture("import-attributes"),
+        });
+      },
+      Error,
+    );
 
-    assert(moduleGraph.graph.get('index.js').has('data.json'));
-    assert(moduleGraph.graph.get('index.js').has('styles.css'));
+    const moduleGraph = await createModuleGraph('./index.ts', { basePath: fixture('import-attributes'), foreignModules: ['**/*.css'], external: {ignore: true} });
+
+    assert(moduleGraph.graph.get('index.ts').has('data.json'));
+    assert(moduleGraph.graph.get('index.ts').has('styles.css'));
+    assert.equal(moduleGraph.modules.get('styles.css').hasModuleSyntax, false);
+  });
+
+  it('virtual-modules', async () => {
+    // When a virtual module is not associated with a file, it should be listed as a foreignModule as well.
+    // In cases where there is an associated file a plugin would be used to resolve the virtual module.
+    const moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('virtual-modules'), foreignModules: ['virtual:*'], virtualModules: ['virtual:*'], external: {ignore: true} });
+
+    assert(moduleGraph.graph.get('index.js').has('virtual:module'));
+    assert.equal(moduleGraph.modules.get('virtual:module').hasModuleSyntax, false);
   });
 
   it('multiple-import-chains', async () => {
@@ -512,36 +530,5 @@ describe('built-in plugins', () => {
     });
 
     assert.equal(moduleGraph.unusedExports.length, 0);
-  });
-
-  it('typescript', async () => {
-    /**
-     * index.ts -> foo.ts -> node_modules/bar/index.js
-     * import { foo } from './foo.js';
-     */
-    const moduleGraph = await createModuleGraph('./index.ts', {
-      basePath: fixture('typescript'),
-      plugins: [typescript()]
-    });
-
-    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
-    assert(moduleGraph.graph.get('foo.ts').has('node_modules/bar/index.js'));
-  });
-
-  it('typescript node', async () => {
-    /**
-     * index.ts -> foo.ts
-     * import { foo } from './foo';
-     */
-    const moduleGraph = await createModuleGraph('./index.ts', {
-      basePath: fixture('typescript-node'),
-      plugins: [typescript({
-        compilerOptions: {
-          moduleResolution: "node",
-        }
-      })]
-    });
-
-    assert(moduleGraph.graph.get('index.ts').has('foo.ts'));
   });
 });

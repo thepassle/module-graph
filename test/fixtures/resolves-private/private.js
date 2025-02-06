@@ -1,1 +1,1 @@
-export const private = 'private';
+export const privateVar = 'private';

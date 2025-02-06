@@ -1,0 +1,1 @@
+import something, { somethingElse } from 'virtual:module'

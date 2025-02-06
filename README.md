@@ -1,6 +1,6 @@
 # Module graph
 
-Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, typescript (via a plugin) and is extensible via plugins. Builds on top of [`es-module-lexer`](https://www.npmjs.com/package/es-module-lexer) for scanning a module's imports, and [`oxc-resolver`](https://www.npmjs.com/package/oxc-resolver) for module resolution.
+Creates a module graph based on a given entrypoint. Supports ESM, monorepos, import attributes, typescript, and is extensible via plugins. Builds on top of [`rs-module-lexer`](https://www.npmjs.com/package/rs-module-lexer) for scanning a module's imports, and [`oxc-resolver`](https://www.npmjs.com/package/oxc-resolver) for module resolution.
 
 ## Installation
 
@@ -45,39 +45,17 @@ const moduleGraph = await createModuleGraph('./index.js', {
   ],
   /** Ignores dynamic imports */
   ignoreDynamicImport: true,
+  /** Picomatch glob patterns or callbacks for modules that should not be parsed because
+   * they do on exist or are not using valid js/ts/jsx/tsx syntax
+   */
+  foreignModules: ['**/*.css', 'virtual:*'],
+  /** Picomatch glob patterns or callbacks for imports that may not be tied to physical file */
+  virtualModules: ['virtual:*'],
   plugins: [myPlugin]
 });
 ```
 
 `createModuleGraph` analyzes only ESM-style imports, not `require`. However, if a CommonJS file is found and uses a dynamic import, it will include the dynamic import in the graph and any other imports that leads to.
-
-## Typescript
-
-If you want to analyze typescript source code, you can use the `typescript` plugin:
-
-```js
-import { createModuleGraph } from '@thepassle/module-graph';
-import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
-
-const moduleGraph = await createModuleGraph('./index.ts', {
-  plugins: [typescript()]
-});
-```
-
-The default is set to ESM, which means it expects `.js` file extensions in your code. However, you can also provide your `tsconfig.json` options to the typescript plugin, to resolve extensionless typescript imports, e.g.: `import { Foo } from './foo';`:
-
-```js
-import { createModuleGraph } from '@thepassle/module-graph';
-import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
-
-const moduleGraph = await createModuleGraph('./index.ts', {
-  plugins: [typescript({
-    compilerOptions: {
-      moduleResolution: "node",
-    }
-  })]
-});
-```
 
 ## CLI
 
@@ -91,12 +69,6 @@ npx @thepassle/module-graph import-chain entrypoint.js module-to-find.js
 
 # Find specific module
 npx @thepassle/module-graph find entrypoint.js module-to-find.js
-```
-
-All CLI commands also allow the `--ts` option if your source code is in Typescript, and this can be combined with the `--node` flag if you're using extensionless imports in Typescript. E.g.:
-
-```bash
-npx @thepassle/module-graph find entrypoint.ts module-to-find.ts --ts --node
 ```
 
 ## `ModuleGraph`
@@ -144,14 +116,12 @@ chains.forEach((c) => console.log(c.join(" -> ")));
 
 You can also extend the default behavior by providing plugins. There are several default, opt-in plugins available:
 
-- **Typescript** analyze TS source code. Takes a `compilerOptions` object.
 - **Imports** outputs additional analysis of every modules imports on the `Module` object
 - **Exports** outputs additional analysis of every modules exports on the `Module` object
 - **Barrel-file** analyzes every module to see if it's a barrel file
 - **Unused-exports** finds unused exports in your module graph
 
 ```js
-import { typescript } from '@thepassle/module-graph/plugins/typescript.js';
 import { imports } from '@thepassle/module-graph/plugins/imports.js';
 import { exports } from '@thepassle/module-graph/plugins/exports.js';
 import { barrelFile } from '@thepassle/module-graph/plugins/barrel-file.js';
@@ -159,7 +129,6 @@ import { unusedExports } from '@thepassle/module-graph/plugins/unused-exports.js
 
 const moduleGraph = await createModuleGraph('./index.js', {
   plugins: [
-    typescript(),
     imports,
     exports,
     unusedExports,

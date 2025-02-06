@@ -1,5 +1,6 @@
 import { ModuleGraph } from './ModuleGraph.js';
 import type { NapiResolveOptions } from 'oxc-resolver';
+import type { URL } from 'node:url';
 
 interface UserProvided {
   [key: string]: any;
