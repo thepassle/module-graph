@@ -1,5 +1,6 @@
 import { ModuleGraph } from './ModuleGraph.js';
 import type { NapiResolveOptions } from 'oxc-resolver';
+import type { ImportSpecifier } from 'es-module-lexer'; // Same type is exported in rs-module-lexer as well
 
 interface UserProvided {
   [key: string]: any;
@@ -12,7 +13,7 @@ export interface Module extends UserProvided {
   pathname: string,
   /** Relative path from the cwd */
   path: string,
-  source: string,
+  source?: string,
   packageRoot?: URL,
   facade: boolean,
   hasModuleSyntax: boolean,
@@ -65,7 +66,12 @@ export interface Plugin {
    * additional meta information to the Module object
    * You can mutate the module directly, no need to return it
    */
-  analyze?: (module: Module) => void | Promise<void>;
+  analyze?: (
+    module: Module,
+    moduleGraph: ModuleGraph,
+    source: string,
+    imports: ImportSpecifier[]
+  ) => void | Promise<void>;
   /**
    * Runs for every import starting (but excluding) the entrypoints
    * Can be used to implement custom resolution logic

@@ -43,6 +43,8 @@ const moduleGraph = await createModuleGraph('./index.js', {
     '**/foo/*.js',
     (importee) => importee.includes('foo')
   ],
+  /** Keep a copy of all visited source code in memory */
+  keepSource: true,
   /** Ignores dynamic imports */
   ignoreDynamicImport: true,
   plugins: [myPlugin]
@@ -253,14 +255,14 @@ const moduleGraph = await createModuleGraph('./index.js', {
 
 > Runs for every module
 
-Can be used to analyze the module (or its source), and add additional meta information to the Module object
+Can be used to analyze the module (or its source or parsed imports), and add additional meta information to the Module or ModuleGraph objects
 
-You can mutate the module directly, no need to return it
+You can mutate the module or moduleGraph directly, no need to return anything
 
 ```js
 const plugin = {
   name: 'my-plugin',
-  analyze: (module) => {
+  analyze: (module, moduleGraph, source, imports) => {
     if (module.source.includes('process.env')) {
       module.usesProcessEnv = true;
     }

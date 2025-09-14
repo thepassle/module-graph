@@ -29,6 +29,7 @@ const picomatch = pm.default;
  *  exportConditions?: NapiResolveOptions["conditionNames"],
  *  ignoreDynamicImport?: boolean,
  *  exclude?: Array<string | ((importee: string) => boolean)>,
+ *  keepSource?: boolean
  * }} options
  * @returns {Promise<ModuleGraph>}
  */
@@ -44,6 +45,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       exclude: [],
     },
     exclude: excludePatterns = [],
+    keepSource = true,
     ...resolveOptions 
   } = options;
   if (external.ignore && external.include?.length) {
@@ -88,7 +90,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       href: pathToFileURL(module).href,
       pathname: pathToFileURL(module).pathname,
       path: module,
-      source: '',
+      ...(keepSource ? { source: '' } : {}),
       facade: false,
       hasModuleSyntax: true,
       importedBy: []
@@ -243,7 +245,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
           importedBy: [],
           facade: false,
           hasModuleSyntax: true,
-          source: '',
+          ...(keepSource ? { source: '' } : {}),
           ...(packageRoot ? {packageRoot} : {}),
         }
 
@@ -277,13 +279,17 @@ export async function createModuleGraph(entrypoints, options = {}) {
        * Add `source` code to the Module
        */
       const currentModule = /** @type {Module} */ (moduleGraph.modules.get(dep));
-      currentModule.source = source;
+      if (keepSource) {
+          currentModule.source = source;
+      }
       currentModule.facade = facade;
       currentModule.hasModuleSyntax = hasModuleSyntax;
 
       const externalModule = moduleGraph.externalModules.get(currentModule.pathname);
       if (externalModule) {
-        externalModule.source = source;
+        if (keepSource) {
+            externalModule.source = source;
+        }
         externalModule.facade = facade;
         externalModule.hasModuleSyntax = hasModuleSyntax;
       }
@@ -293,7 +299,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
        */
       for (const { name, analyze } of plugins) {
         try {
-          await analyze?.(currentModule);
+          await analyze?.(currentModule, moduleGraph, source, imports);
         } catch(e) {
           const { stack } = /** @type {Error} */ (e);
           const error = new Error(`[PLUGIN] "${name}" failed on the "analyze" hook.\n\n${stack}`);

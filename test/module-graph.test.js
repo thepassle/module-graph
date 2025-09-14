@@ -53,6 +53,16 @@ describe('createModuleGraph', () => {
     assert.deepStrictEqual(chains[0], ['index.js', 'bar.js', 'baz.js']);
   });
 
+  it('keep-source', async () => {
+    let moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('keep-source'), keepSource: true });
+    let source = moduleGraph.modules.get('bar.js')?.source;
+    assert.equal(source, "export const bar = 'bar';");
+
+    moduleGraph = await createModuleGraph('./index.js', { basePath: fixture('keep-source'), keepSource: false });
+    source = moduleGraph.modules.get('bar.js')?.source;
+    assert.equal(source, undefined);
+  });
+
   it('dynamic-import', async () => {
     /**
      * index.js -> import('./foo.js')
