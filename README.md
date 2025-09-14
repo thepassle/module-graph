@@ -249,6 +249,73 @@ const moduleGraph = await createModuleGraph('./index.js', {
 });
 ```
 
+#### `resolve`
+
+> Runs for every import starting (but excluding) the entrypoint
+
+Can be used to implement custom resolution logic. Gets passed the `resolveOptions` passed to `createModuleGraph`. If a plugin resolves the module and returns it from the `resolve` hook, consequent plugins will no longer be executed, because the module is already resolved.
+
+- If nothing is returned, the default resolution will be used
+- If a URL is returned, it will output that instead
+
+```js
+const plugin = {
+  name: 'my-plugin',
+  resolve: ({ importee, importer, exportConditions, ...resolveOptions }) => {
+    return customResolve(importee, importer, exportConditions);
+  }
+}
+
+const moduleGraph = await createModuleGraph('./index.js', {
+  plugins: [plugin]
+});
+```
+#### `append`
+
+> Runs for every module
+
+Can be used to modify module objects prior to inclusion in graph, or to bring in side effect modules when certain conditions are met.
+
+If nothing is returned, the module[s] will be included as is.
+
+If an array of modules is returned, they will be included in addition to the original module.
+
+You can also modify the original module and return it in the same array.
+
+The module's `path` key is used in determining uniqueness during collisions.
+
+```js
+const plugin = {
+  name: 'my-plugin',
+  append: ({ modules, moduleGraph, importee, specifier, source }) => {
+    return modules.map((module) => {
+      if (module.path.endsWith('bar.js')) {
+        const sideEffect = 'side-effect.js';
+        const sideEffectPath = path.join(moduleGraph.basePath, sideEffect);
+        const sideEffectModule = {
+          href: 'file://' + sideEffectPath,
+          pathname: sideEffectPath,
+          path: sideEffect,
+          importedBy: [],
+          facade: false,
+          hasModuleSyntax: true,
+          source: '',
+        }
+        return sideEffectModule;
+      }
+      return module;
+    });
+  }
+}
+
+const moduleGraph = await createModuleGraph('./index.js', {
+  plugins: [plugin]
+});
+
+moduleGraph.get('module-containing-process-env.js').usesProcessEnv; // true
+```
+
+
 #### `analyze`
 
 > Runs for every module
@@ -272,28 +339,6 @@ const moduleGraph = await createModuleGraph('./index.js', {
 });
 
 moduleGraph.get('module-containing-process-env.js').usesProcessEnv; // true
-```
-
-#### `resolve`
-
-> Runs for every import starting (but excluding) the entrypoint
-
-Can be used to implement custom resolution logic. Gets passed the `resolveOptions` passed to `createModuleGraph`. If a plugin resolves the module and returns it from the `resolve` hook, consequent plugins will no longer be executed, because the module is already resolved.
-
-- If nothing is returned, the default resolution will be used
-- If a URL is returned, it will output that instead
-
-```js
-const plugin = {
-  name: 'my-plugin',
-  resolve: ({ importee, importer, exportConditions, ...resolveOptions }) => {
-    return customResolve(importee, importer, exportConditions);
-  }
-}
-
-const moduleGraph = await createModuleGraph('./index.js', {
-  plugins: [plugin]
-});
 ```
 
 #### `end`

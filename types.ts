@@ -1,5 +1,7 @@
+import { ImportSpecifier } from 'es-module-lexer';
 import { ModuleGraph } from './ModuleGraph.js';
 import type { NapiResolveOptions } from 'oxc-resolver';
+import type { URL } from 'url';
 
 interface UserProvided {
   [key: string]: any;
@@ -60,13 +62,6 @@ export interface Plugin {
     importee: string,
   }) => void | boolean | string | Promise<void | boolean | string>;
   /**
-   * Runs for every module
-   * Can be used to analyze the module (or its source), and add 
-   * additional meta information to the Module object
-   * You can mutate the module directly, no need to return it
-   */
-  analyze?: (module: Module) => void | Promise<void>;
-  /**
    * Runs for every import starting (but excluding) the entrypoints
    * Can be used to implement custom resolution logic
    * If nothing is returned, the default resolution will be used
@@ -77,6 +72,30 @@ export interface Plugin {
     importer: string,
     exportConditions: string[],
   } & NapiResolveOptions) => URL | void | Promise<void | URL>;
+  /**
+   * Runs for every import starting (but excluding) the entrypoints
+   * Can be used to modify module objects prior to inclusion in graph,
+   * or to bring in side effect modules when certain conditions are met.
+   * If nothing is returned, the module[s] will be included as is.
+   * If an array of modules is returned, they will be included in addition to
+   * the original module.
+   * You can also modify the original module and return it.
+   * The module's `path` key is used in determining uniqueness during collisions.
+   */
+  append?: (params: {
+    modules: Module[],
+    moduleGraph: ModuleGraph,
+    importer: string,
+    specifier: ImportSpecifier,
+    source: string,
+  }) => Module[] | void | Promise<Module[] | void>;
+  /**
+   * Runs for every module
+   * Can be used to analyze the module (or its source), and add 
+   * additional meta information to the Module object
+   * You can mutate the module directly, no need to return it
+   */
+  analyze?: (module: Module) => void | Promise<void>;
   /**
    * Runs once
    * Use for cleanup logic of the plugin

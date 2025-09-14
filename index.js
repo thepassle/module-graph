@@ -91,7 +91,7 @@ export async function createModuleGraph(entrypoints, options = {}) {
       source: '',
       facade: false,
       hasModuleSyntax: true,
-      importedBy: []
+      importedBy: [],
     });
 
     moduleGraph.graph.set(module, new Set());
@@ -125,7 +125,8 @@ export async function createModuleGraph(entrypoints, options = {}) {
       }
 
       const [imports, _, facade, hasModuleSyntax] = parse(source);
-      importLoop: for (let { n: importee, ss: start, se: end } of imports) {
+      importLoop: for (const specifier of imports) {
+        let { n: importee, ss: start, se: end } = specifier;
         const importString = source.substring(start, end);
         if (!importee) continue;
         if (ignoreDynamicImport && importString.startsWith('import(')) continue;
@@ -208,35 +209,8 @@ export async function createModuleGraph(entrypoints, options = {}) {
           continue;
         }      
 
-        /** 
-         * Get the packageRoot of the external dependency, which is useful for getting
-         * to the package.json, for example. You can't always `require.resolve` it, 
-         * if it's not included in the packages package exports.
-         */
-        let packageRoot;
-        let pkg;
-        if (pathToDependency.includes('node_modules')) {
-          const resolvedPath = fileURLToPath(resolvedURL);
-          const separator = 'node_modules' + path.sep;
-          const lastIndex = resolvedPath.lastIndexOf(separator);
-
-          const filePath = resolvedPath.substring(0, lastIndex + separator.length);
-          const importSpecifier = resolvedPath.substring(lastIndex + separator.length);
-          /**
-           * @example "@foo/bar"
-           */
-          if (isScopedPackage(importSpecifier)) {
-            const split = importSpecifier.split(path.sep);
-            pkg = [split[0], split[1]].join(path.sep);
-            packageRoot = pathToFileURL(path.join(filePath, pkg));
-          } else {
-            pkg = importSpecifier.split(path.sep)[0];
-            packageRoot = pathToFileURL(path.join(filePath, pkg));
-          }
-        }
-
         /** @type {Module} */
-        const module = {
+        const newModule = {
           href: resolvedURL.href,
           pathname: resolvedURL.pathname,
           path: pathToDependency,
@@ -244,33 +218,91 @@ export async function createModuleGraph(entrypoints, options = {}) {
           facade: false,
           hasModuleSyntax: true,
           source: '',
-          ...(packageRoot ? {packageRoot} : {}),
         }
 
-        if (isBareModuleSpecifier(importee)) {
-          moduleGraph.externalModules.set(resolvedURL.pathname, {
-            ...module,
-            package: /** @type {string} */ (pkg),
-            importSpecifier: importee
-          });
-        }
-        
-        if (!moduleGraph.graph.has(pathToDependency)) {
-          importsToScan.add(pathToDependency);
+        /** @type {Map<string, Module>} */
+        let modules = new Map();
+        modules.set(newModule.path, newModule);
+
+        /**
+         * [PLUGINS] - append
+         */
+        for (const { name, append } of plugins) {
+          try {
+            const results = await append?.({
+              modules: Array.from(modules.values()),
+              moduleGraph,
+              importer: dep,
+              specifier,
+              source,
+            });
+            if (results && results.length) {
+              for (const result of results) {
+                modules.set(result.path, result);
+              }
+            }
+          } catch(e) {
+            const { stack } = /** @type {Error} */ (e);
+            const error = new Error(`[PLUGIN] "${name}" failed on the "append" hook.\n\n${stack}`);
+            throw error;
+          }
         }
 
-        if (!moduleGraph.modules.has(pathToDependency)) {
-          moduleGraph.modules.set(pathToDependency, module);
-        }
-        if (!moduleGraph.graph.has(dep)) {
-          moduleGraph.graph.set(dep, new Set());
-        }
-        /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(pathToDependency);
-        
-        const importedModule = moduleGraph.modules.get(pathToDependency);
-        if (importedModule && !importedModule.importedBy.includes(dep)) {
-          importedModule.importedBy.push(dep);
-        }
+        for (const module of modules.values()) {
+          /** 
+           * Get the packageRoot of the external dependency, which is useful for getting
+           * to the package.json, for example. You can't always `require.resolve` it, 
+           * if it's not included in the packages package exports.
+           */
+          let packageRoot;
+          let pkg;
+          if (module.path.includes('node_modules')) {
+            const resolvedPath = fileURLToPath(module.href);
+            const separator = 'node_modules' + path.sep;
+            const lastIndex = resolvedPath.lastIndexOf(separator);
+
+            const filePath = resolvedPath.substring(0, lastIndex + separator.length);
+            const importSpecifier = resolvedPath.substring(lastIndex + separator.length);
+            /**
+             * @example "@foo/bar"
+             */
+            if (isScopedPackage(importSpecifier)) {
+              const split = importSpecifier.split(path.sep);
+              pkg = [split[0], split[1]].join(path.sep);
+              packageRoot = pathToFileURL(path.join(filePath, pkg));
+            } else {
+              pkg = importSpecifier.split(path.sep)[0];
+              packageRoot = pathToFileURL(path.join(filePath, pkg));
+            }
+          }
+
+          module.packageRoot = packageRoot;
+
+          if (isBareModuleSpecifier(importee)) {
+            moduleGraph.externalModules.set(module.pathname, {
+              ...module,
+              package: /** @type {string} */ (pkg),
+              importSpecifier: importee,
+            });
+          }
+          
+          if (!moduleGraph.graph.has(module.path)) {
+            importsToScan.add(module.path);
+          }
+
+          if (!moduleGraph.modules.has(module.path)) {
+            moduleGraph.modules.set(module.path, module);
+          }
+          if (!moduleGraph.graph.has(dep)) {
+            moduleGraph.graph.set(dep, new Set());
+          }
+          /** @type {Set<string>} */ (moduleGraph.graph.get(dep)).add(module.path);
+          
+          const importedModule = moduleGraph.modules.get(module.path);
+          if (importedModule && !importedModule.importedBy.includes(dep)) {
+            importedModule.importedBy.push(dep);
+          }
+        };
       };
 
       /**
